@@ -74,8 +74,8 @@ button.danger{border-color:#7a3a2d;color:#f0a793}
 #overlay p{margin:0 0 13px;color:var(--muted);line-height:1.55}
 #overlay ol{margin:0 0 16px;padding-left:20px;line-height:1.65}
 /* UI polish + resilient contract modal */
-button{transition:background .14s ease,border-color .14s ease,transform .06s ease,box-shadow .14s ease}
-button:active:not(:disabled){transform:translateY(1px)}
+button{transition:background .14s ease,border-color .14s ease,box-shadow .14s ease}
+button:active:not(:disabled){transform:none}
 .block{background:linear-gradient(180deg,rgba(20,49,58,.28),rgba(10,28,33,.12));border:1px solid rgba(43,89,100,.45);border-radius:8px;padding:9px 10px}
 .block h3{letter-spacing:.04em;text-transform:uppercase}
 #tabs button:hover:not(:disabled){background:#183b45}
@@ -83,6 +83,29 @@ button:active:not(:disabled){transform:translateY(1px)}
 .modalBackdrop{position:fixed;inset:0;background:rgba(2,10,14,.76);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
 .modalBackdrop.open{display:flex}.appModal{width:min(620px,94vw);max-height:88vh;overflow:auto;background:linear-gradient(180deg,#102b32,#0b2026);border:1px solid #376875;border-radius:12px;box-shadow:0 22px 70px rgba(0,0,0,.55);padding:16px}.appModal header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.appModal h2{margin:0;font-size:17px}.appModal header p{margin:3px 0 0;color:var(--muted);font-size:11.5px}.modalGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.modalField{display:flex;flex-direction:column;gap:4px}.modalField label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}.modalField input,.modalField select{width:100%;background:#0a1c21;color:var(--text);border:1px solid #2b5964;border-radius:6px;padding:8px;font:inherit}.modalActions{display:flex;justify-content:flex-end;gap:7px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}.primary{background:#c99d38;color:#171208;border-color:#d8b14f}.primary:hover:not(:disabled){background:#dfb957}@media(max-width:620px){.modalGrid{grid-template-columns:1fr}}
 @media(max-width:900px){#app{flex-direction:column}#side{width:100%;flex:0 0 auto;max-height:52vh;border-left:none;border-top:1px solid var(--line)}#mapWrap{flex:1 1 48vh}#log{height:70px}}
+
+/* Sidebar + finance dashboard */
+#side{position:relative;transition:width .18s ease,flex-basis .18s ease;z-index:5}
+#sideToggle{position:absolute;left:-36px;top:12px;z-index:8;width:32px;height:32px;padding:0;border-radius:7px 0 0 7px;background:#102b32;border:1px solid var(--line2);box-shadow:0 4px 14px rgba(0,0,0,.25);font-size:15px}
+#sideToggle:hover{background:#183d46}
+#side.collapsed{width:46px;flex-basis:46px}
+#side.collapsed> :not(#sideToggle){display:none}
+#side.collapsed #sideToggle{left:7px;border-radius:7px}
+#tabs{overflow-x:auto;grid-template-columns:repeat(7,minmax(78px,1fr))}
+#tabs button{min-width:78px}
+.finKpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:8px}
+.finKpi{padding:9px;border:1px solid #234c55;border-radius:8px;background:rgba(8,28,34,.55)}
+.finKpi small{display:block;color:var(--muted);font-size:10px;margin-bottom:3px}
+.finKpi b{font-size:14px;font-variant-numeric:tabular-nums}
+.finChart{width:100%;height:auto;display:block;background:#091d23;border:1px solid #234c55;border-radius:8px}
+.finLegend{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:5px}
+.finDot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;background:var(--gold)}
+.finDot.net{background:var(--green)}
+.finDot.cost{background:var(--red)}
+.finTable{width:100%;border-collapse:collapse;font-size:11px}
+.finTable th,.finTable td{padding:5px 3px;border-bottom:1px dotted #22484f;text-align:right}
+.finTable th:first-child,.finTable td:first-child{text-align:left}
+
 
 /* vNext interface: clear hierarchy, discreet guidance, stable controls */
 :root{--panel3:#132f37;--line2:#2b5964;--focus:#f2ca68}
@@ -92,7 +115,7 @@ button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 button.primary{background:linear-gradient(180deg,#d8b052,#b78a2e);color:#181309;border-color:#e7c66b}
 button.on{background:#1d4650;border-color:#5c8e99}
 button:disabled{opacity:.42;cursor:not-allowed}
-#tabs{padding:7px;gap:5px;display:grid;grid-template-columns:repeat(5,1fr);background:#091d23;border-bottom:1px solid var(--line)}
+#tabs{padding:7px;gap:5px;display:grid;grid-template-columns:repeat(6,1fr);background:#091d23;border-bottom:1px solid var(--line)}
 #tabs button{font-size:11px;padding:7px 5px;white-space:nowrap}
 #head{background:linear-gradient(180deg,rgba(20,55,64,.32),rgba(15,38,44,.05))}
 #head h2{letter-spacing:-.015em}
@@ -112,6 +135,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .memberMeta{font-size:10.5px;color:var(--muted);line-height:1.45}
 .equipList{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
 .equipChip{padding:2px 6px;border-radius:5px;background:#1c3d45;border:1px solid #2b5964;font-size:10px}
+.marketGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.marketItem{padding:9px;border:1px solid #234c55;border-radius:7px;background:rgba(8,28,34,.5)}.marketItem .price{font-weight:800;color:var(--gold)}.marketStock{font-size:10px;color:var(--muted);margin-top:3px}.marketTag{display:inline-block;padding:2px 6px;border-radius:999px;background:#1b3b43;border:1px solid #2b5964;font-size:9px;margin-left:4px}@media(max-width:620px){.marketGrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -134,12 +158,14 @@ button:disabled{opacity:.42;cursor:not-allowed}
   </div>
   <div id="contractModal" class="modalBackdrop" aria-hidden="true"><section class="appModal" role="dialog" aria-modal="true" aria-labelledby="contractTitle"><header><div><h2 id="contractTitle">Nova proposta de fornecimento</h2><p>Negocie a venda antes de reservar e transportar a mercadoria.</p></div><button type="button" id="contractClose" aria-label="Fechar">✕</button></header><div class="modalGrid"><div class="modalField"><label for="modalBuyer">Comprador</label><select id="modalBuyer"></select></div><div class="modalField"><label for="modalGood">Mercadoria</label><select id="modalGood"></select></div><div class="modalField"><label for="modalOrigin">Origem</label><select id="modalOrigin"></select></div><div class="modalField"><label for="modalQty">Quantidade</label><input id="modalQty" type="number" min="1" value="25"></div><div class="modalField"><label for="modalPrice">Preço por unidade</label><input id="modalPrice" type="number" min="1" value="65"></div></div><div class="hint" id="modalContractHint" style="margin-top:10px">A mercadoria permanece no estoque até a logística assumir a entrega.</div><div class="modalActions"><button type="button" id="contractCancel">Cancelar</button><button type="button" id="contractSubmit" class="primary">Enviar proposta</button></div></section></div>
   <aside id="side">
+    <button type="button" id="sideToggle" aria-label="Recolher painel lateral" title="Recolher painel lateral">❯</button>
     <div id="tabs">
       <button type="button" data-tab="terr" class="on">Território</button>
       <button type="button" data-tab="logi">Logística</button>
       <button type="button" data-tab="painel">Painel<span id="tabAlertCount"></span></button>
+      <button type="button" data-tab="fin">Finanças</button>
       <button type="button" data-tab="fac">Facção</button>
-      <button type="button" data-tab="membros">Membros</button>
+      <button type="button" data-tab="membros">Membros</button><button type="button" data-tab="mercado">Mercado</button>
     </div>
     <div id="head"><h2 id="selName">Península</h2><p id="selSub">Selecione um território no mapa.</p></div>
     <div id="panel"></div>
@@ -257,6 +283,26 @@ const EQUIPMENT = {
   colete:{name:'Colete Tático',slot:'proteção',desc:'Proteção abstrata para a simulação.',hp:18,eff:2}
 };
 
+const BLACK_MARKET_CATALOG = {
+  ay47:{price:1200,stock:3,tag:'arma'}, gloky:{price:850,stock:4,tag:'arma'}, carabina9:{price:1650,stock:2,tag:'arma'},
+  munA:{price:140,stock:12,tag:'munição'}, munB:{price:210,stock:9,tag:'munição'},
+  radio:{price:420,stock:6,tag:'apoio'}, kitLog:{price:650,stock:5,tag:'apoio'}, colete:{price:720,stock:4,tag:'proteção'}
+};
+const BlackMarket = {
+  stock:{}, nextRefresh:0,
+  reset(now=6){ this.nextRefresh=now+12; this.refresh(); },
+  refresh(){ for(const [id,c] of Object.entries(BLACK_MARKET_CATALOG)) this.stock[id]=c.stock + Math.floor(Math.random()*2); },
+  tick(h){ if(h>=this.nextRefresh){ this.nextRefresh=h+12; this.refresh(); UI.log('🕳️ <b>Mercado negro:</b> novo carregamento disponível.'); } },
+  buy(fid,item,qty=1){
+    const c=BLACK_MARKET_CATALOG[item], f=World.fac[fid];
+    if(!c||!f) return 'Item indisponível.';
+    if((this.stock[item]||0)<qty) return 'Estoque do mercado negro esgotado.';
+    const total=c.price*qty;
+    if(f.money<total) return `Caixa insuficiente: ${money(total)} necessários.`;
+    f.money-=total; this.stock[item]-=qty; f.inventory[item]=(f.inventory[item]||0)+qty;
+    return null;
+  }
+};
 
 /* =============================== MapData ================================ */
 const LAT = [
@@ -319,13 +365,14 @@ const MapData = (()=>{
 
 /* ================================ World ================================= */
 const World = {
-  h:6, uid:1, terr:[], ix:{}, fac:[], units:[], veh:[], ops:[], trades:[], loans:[], events:[], relations:{}, over:false, speed:1, selected:null,
+  h:6, uid:1, terr:[], ix:{}, fac:[], units:[], veh:[], ops:[], trades:[], loans:[], events:[], relations:{}, over:false, speed:1, selected:null, financeHistory:[],
 
   reset(){
     const {list,ix}=MapData.build();
     this.terr=list; this.ix=ix; this.units=[]; this.veh=[]; this.ops=[]; this.trades=[]; this.loans=[]; this.events=[];
-    this.h=6; this.uid=1; this.over=false; this.selected=null;
-    this.fac=FACTIONS.map(f=>({...f, money:9000, heat:0, alive:true, hold:0, lastOp:-200, mood:'consolidar',drivers:0,admins:2,credit:0,reputation:50,specialty:FACTION_SPECIALTIES[f.id]}));
+    this.h=6; this.uid=1; this.over=false; this.selected=null; this.financeHistory=[];
+    this.fac=FACTIONS.map(f=>({...f, money:9000, heat:0, alive:true, hold:0, lastOp:-200, mood:'consolidar',drivers:0,admins:2,credit:0,reputation:50,specialty:FACTION_SPECIALTIES[f.id],inventory:{}}));
+    BlackMarket.reset(this.h);
     this.relations={};
     for(let a=0;a<this.fac.length;a++) for(let b=0;b<this.fac.length;b++) this.relations[`${a}:${b}`]=a===b?'aliada':'neutra';
     // Um parceiro comercial inicial permite testar o sistema imediatamente.
@@ -375,7 +422,13 @@ const World = {
   setRelation(a,b,r){ this.relations[`${a}:${b}`]=r; this.relations[`${b}:${a}`]=r; },
   equip(u,item){
     if(!u||!EQUIPMENT[item]) return 'Equipamento inválido.';
-    const slot=EQUIPMENT[item].slot; u.equipment=(u.equipment||[]).filter(x=>EQUIPMENT[x]?.slot!==slot); u.equipment.push(item); return null;
+    const f=this.fac[u.f]; if(!f) return 'Facção inválida.';
+    const slot=EQUIPMENT[item].slot; u.equipment=u.equipment||[];
+    if(u.equipment.includes(item)) return null;
+    if((f.inventory?.[item]||0)<1) return 'Esse item não está no estoque da facção. Compre-o no Mercado Negro.';
+    const old=u.equipment.find(x=>EQUIPMENT[x]?.slot===slot);
+    if(old){ f.inventory[old]=(f.inventory[old]||0)+1; u.equipment=u.equipment.filter(x=>x!==old); }
+    f.inventory[item]-=1; u.equipment.push(item); return null;
   },
   unitEfficiency(u){
     const base=(u.efficiency||70)+(u.experience||0)*0.35;
@@ -981,6 +1034,41 @@ const Police = {
   }
 };
 
+
+/* ============================ Renda Alternativa ============================
+   Atividades ilícitas são abstrações de gameplay: dão caixa rápido, mas elevam
+   pressão policial e podem provocar apreensões. Não representam instruções reais. */
+const Crime = {
+  cooldown: {},
+  defs: {
+    carjack:{name:'Roubo de veículo',desc:'Obter um veículo e repassá-lo por canais clandestinos.',min:520,max:980,heat:9,unrest:4,cd:8},
+    contraband:{name:'Frete clandestino',desc:'Transportar uma carga de alto risco fora dos contratos formais.',min:360,max:760,heat:6,unrest:2,cd:6},
+    salvage:{name:'Recuperação clandestina',desc:'Recuperar e revender ativos abandonados.',min:280,max:620,heat:3,unrest:1,cd:5},
+    collection:{name:'Cobrança paralela',desc:'Resolver uma dívida local por vias informais.',min:240,max:540,heat:5,unrest:3,cd:7}
+  },
+  tick(dh){
+    for(const k of Object.keys(this.cooldown)) this.cooldown[k]=Math.max(0,this.cooldown[k]-dh);
+  },
+  do(fid,tid,type){
+    const f=World.fac[fid], t=World.ix[tid], d=this.defs[type];
+    if(!f||!t||!d) return 'Atividade indisponível.';
+    if(t.owner!==fid) return 'A atividade precisa ser realizada em território sob seu controle.';
+    const key=`${fid}:${tid}:${type}`;
+    if((this.cooldown[key]||0)>0) return `A atividade precisa esfriar por mais ${Math.ceil(this.cooldown[key])}h.`;
+    const base=d.min+Math.random()*(d.max-d.min);
+    const control=Math.max(.65,Math.min(1.15,(t.inf[fid]||0)/80));
+    const payout=Math.round(base*control*(1-t.unrest/180));
+    f.money+=payout;
+    f.heat=Math.min(CONF.heatMax,f.heat+d.heat);
+    t.heat=Math.min(100,(t.heat||0)+d.heat*.7);
+    t.unrest=Math.min(100,t.unrest+d.unrest);
+    this.cooldown[key]=d.cd;
+    World.events.push({id:World.uid++,name:d.name,desc:`Atividade concluída em ${t.name}`,until:World.h+Math.max(2,d.cd*.5)});
+    if(fid===0) UI.log(`💵 <b>${d.name}</b> em ${t.name}: +${money(payout)} · pressão policial +${d.heat}%`,'warn');
+    return null;
+  }
+};
+
 /* ============================== Cidade Viva ============================== */
 const City={
   cd:48,
@@ -1026,8 +1114,8 @@ const AI = {
     const mine=World.units.filter(u=>u.f===f.id);
     for(const u of mine){
       const preferred=u.kind==='seguranca'?pool.filter(x=>EQUIPMENT[x].slot==='arma'||EQUIPMENT[x].slot==='proteção'):pool.filter(x=>EQUIPMENT[x].slot==='apoio');
-      for(const item of preferred){ if(!u.equipment.includes(item)){ World.equip(u,item); break; } }
-      const ammo=pool.find(x=>EQUIPMENT[x].slot==='munição'); if(ammo&&!u.equipment.some(x=>EQUIPMENT[x].slot==='munição')) World.equip(u,ammo);
+      for(const item of preferred){ if(!u.equipment.includes(item)){ if((f.inventory[item]||0)<1) BlackMarket.buy(f.id,item,1); World.equip(u,item); break; } }
+      const ammo=pool.find(x=>EQUIPMENT[x].slot==='munição'); if(ammo&&!u.equipment.some(x=>EQUIPMENT[x].slot==='munição')){ if((f.inventory[ammo]||0)<1) BlackMarket.buy(f.id,ammo,1); World.equip(u,ammo); }
       u.maxhp=World.unitMaxHp(u); u.hp=Math.min(u.hp,u.maxhp);
     }
   },
@@ -1442,6 +1530,14 @@ const UI=(()=>{
     }
 
     if(t.owner===0){
+      h+=`<div class="block"><h3>💵 Renda alternativa</h3>
+        <div class="uiHelp">Atividades rápidas podem reforçar o caixa, mas aumentam a pressão policial. Use com moderação: operações com muita pressão podem provocar apreensões.</div>
+        <div class="item"><div><div class="nm">🚗 Roubo de veículo</div><div class="ct">Receita variável · +9% pressão · intervalo 8 h</div></div><button type="button" data-crime="carjack">Executar</button></div>
+        <div class="item"><div><div class="nm">📦 Frete clandestino</div><div class="ct">Receita variável · +6% pressão · intervalo 6 h</div></div><button type="button" data-crime="contraband">Executar</button></div>
+        <div class="item"><div><div class="nm">🔧 Recuperação clandestina</div><div class="ct">Receita variável · +3% pressão · intervalo 5 h</div></div><button type="button" data-crime="salvage">Executar</button></div>
+        <div class="item"><div><div class="nm">🧾 Cobrança paralela</div><div class="ct">Receita variável · +5% pressão · intervalo 7 h</div></div><button type="button" data-crime="collection">Executar</button></div>
+        <div class="hint">A polícia reage à pressão acumulada. Quanto maior o risco, maior a chance de perder caixa e estoque em uma operação policial.</div>
+      </div>`;
       if(t.works.length){
         h+=`<div class="block"><h3>Fila de obras (sequencial)</h3>`;
         t.works.forEach((w,i)=>{
@@ -1734,6 +1830,74 @@ const UI=(()=>{
     });
   }
 
+  /* ---------- aba Finanças ---------- */
+  function financePanel(){
+    const p=$('panel'), f=World.fac[0];
+    $('selName').textContent='Finanças';
+    $('selSub').textContent='Caixa, fluxo de dinheiro e capacidade de sustentar a operação.';
+    const hist=World.financeHistory||[];
+    const latest=hist.length?hist[hist.length-1]:{money:f.money,net:0,h:World.h};
+    const prev=hist.length>1?hist[hist.length-2]:latest;
+    const netH=hist.length>1?latest.net:0;
+    const upk=World.upkeep(0);
+    const runway=upk>0?Math.max(0,f.money/upk):Infinity;
+    let income=0;
+    for(const t of World.owned(0)){
+      const control=Math.min(1,(t.inf[0]||0)/70), mult=(1-t.unrest/110)*control;
+      if(t.buildings.ponto) for(const g of SELLABLE) income+=Math.min(t.pointStock[g]||0,(t.demand[g]||0)*mult)*GOODS[g].base*t.price[g]*(.8+t.val*.14)*(FACTION_SPECIALTIES[0]?.tradeMult||1);
+      if(t.type==='bairro'||t.type==='mercado') income+=t.pop/1000*.55*control*(1-t.heat/150);
+    }
+    const balance=income-upk;
+    const vals=hist.slice(-72).map(x=>x.money);
+    const nets=hist.slice(-24).map(x=>x.net);
+    const W=520,H=170,P=24;
+    const minV=vals.length?Math.min(...vals):f.money, maxV=vals.length?Math.max(...vals):f.money+1, span=Math.max(1,maxV-minV);
+    const pts=vals.map((v,i)=>`${P+(vals.length===1?0:i*(W-2*P)/(vals.length-1))},${H-P-(v-minV)/span*(H-2*P)}`).join(' ');
+    const zeroY=H/2;
+    const barW=nets.length?Math.max(3,(W-2*P)/nets.length-2):5;
+    const nmin=nets.length?Math.min(0,...nets):0, nmax=nets.length?Math.max(1,...nets):1, nspan=Math.max(1,nmax-nmin);
+    let bars='';
+    nets.forEach((v,i)=>{const x=P+i*((W-2*P)/Math.max(1,nets.length));const bh=Math.abs(v)/nspan*(H-2*P);const y=v>=0?zeroY-bh:zeroY;bars+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${Math.max(2,barW).toFixed(1)}" height="${Math.max(1,bh).toFixed(1)}" rx="2" fill="${v>=0?'#74cf9a':'#e2664b'}" opacity=".82"/>`;});
+    let h=`<div class="finKpis">
+      <div class="finKpi"><small>Caixa atual</small><b>${money(f.money)}</b></div>
+      <div class="finKpi"><small>Resultado estimado / h</small><b class="${balance<0?'warn':'statGood'}">${balance>=0?'+':''}${money(balance)}</b></div>
+      <div class="finKpi"><small>Custeio / h</small><b class="warn">−${money(upk)}</b></div>
+      <div class="finKpi"><small>Reserva de caixa</small><b>${runway===Infinity?'∞':Math.floor(runway)+' h'}</b></div>
+    </div>`;
+    h+=`<div class="block"><h3>Caixa ao longo do tempo</h3>
+      <svg class="finChart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Gráfico do caixa ao longo do tempo">
+        <line x1="${P}" y1="${H-P}" x2="${W-P}" y2="${H-P}" stroke="#234c55"/>
+        <line x1="${P}" y1="${P}" x2="${P}" y2="${H-P}" stroke="#234c55"/>
+        ${vals.length>1?`<polyline points="${pts}" fill="none" stroke="#e8b84b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`:''}
+        ${vals.length?`<circle cx="${vals.length===1?P:W-P}" cy="${H-P-(vals[vals.length-1]-minV)/span*(H-2*P)}" r="4" fill="#e8b84b"/>`:''}
+        <text x="${P+4}" y="${P+11}" fill="#93aaa8" font-size="10">${money(maxV)}</text>
+        <text x="${P+4}" y="${H-P-4}" fill="#93aaa8" font-size="10">${money(minV)}</text>
+      </svg>
+      <div class="finLegend"><span><i class="finDot"></i>Caixa</span><span>Últimas ${Math.max(1,vals.length)} horas registradas</span></div>
+    </div>`;
+    h+=`<div class="block"><h3>Fluxo líquido por hora</h3>
+      <svg class="finChart" viewBox="0 0 ${W} ${H/1.55}" role="img" aria-label="Gráfico do fluxo líquido por hora">
+        <line x1="${P}" y1="${zeroY/1.55}" x2="${W-P}" y2="${zeroY/1.55}" stroke="#355a62"/>
+        ${bars}
+        <text x="${P+4}" y="${P}" fill="#93aaa8" font-size="10">positivo</text>
+        <text x="${P+4}" y="${H/1.55-6}" fill="#93aaa8" font-size="10">negativo</text>
+      </svg>
+      <div class="finLegend"><span><i class="finDot net"></i>entrada líquida</span><span><i class="finDot cost"></i>saída líquida</span></div>
+    </div>`;
+    h+=`<div class="block"><h3>Leitura rápida</h3>
+      <div class="row"><span>Receita recorrente estimada</span><b>${money(income)}/h</b></div>
+      <div class="row"><span>Resultado da última hora</span><b class="${netH<0?'warn':'statGood'}">${netH>=0?'+':''}${money(netH)}</b></div>
+      <div class="row"><span>Caixa cobre o custeio por</span><b>${runway===Infinity?'sem pressão':Math.floor(runway)+' h'}</b></div>
+      <div class="hint">O gráfico registra o caixa em intervalos de 1 hora de jogo. Ele mostra a tendência real da sua operação, enquanto a receita/h é uma estimativa do ritmo atual.</div>
+    </div>`;
+    if(hist.length){
+      h+=`<div class="block"><h3>Últimos registros</h3><table class="finTable"><thead><tr><th>Hora</th><th>Caixa</th><th>Resultado</th></tr></thead><tbody>`;
+      for(const x of hist.slice(-8).reverse()) h+=`<tr><td>Dia ${Math.floor(x.h/24)+1} · ${String(Math.floor(x.h%24)).padStart(2,'0')}h</td><td>${money(x.money)}</td><td class="${x.net<0?'warn':'statGood'}">${x.net>=0?'+':''}${money(x.net)}</td></tr>`;
+      h+=`</tbody></table></div>`;
+    }
+    p.innerHTML=h;
+  }
+
   /* ---------- aba Facção ---------- */
   function facPanel(){
     const p=$('panel'), f=World.fac[0];
@@ -1809,6 +1973,23 @@ const UI=(()=>{
     });
   }
 
+  function marketPanel(){
+    const p=$('panel'), f=World.fac[0];
+    $('selName').textContent='Mercado Negro'; $('selSub').textContent='Equipamentos fictícios, munições e itens de apoio para sua facção.';
+    let h=`<div class="block specialtyCard"><h3>Como funciona</h3><div class="uiHelp">O estoque é limitado e muda periodicamente. As compras entram no inventário da facção; depois você decide qual membro recebe cada item.</div><div class="row"><span>Seu caixa</span><b>${money(f.money)}</b></div><div class="row"><span>Próxima remessa</span><b>em ${Math.max(0,BlackMarket.nextRefresh-World.h).toFixed(1)} h</b></div></div>`;
+    h+=`<div class="marketGrid">`;
+    for(const [id,c] of Object.entries(BLACK_MARKET_CATALOG)){ const e=EQUIPMENT[id], owned=f.inventory[id]||0, stock=BlackMarket.stock[id]||0;
+      h+=`<div class="marketItem"><div class="nm">${e.name}<span class="marketTag">${c.tag}</span></div><div class="uiHelp">${e.desc}</div><div class="marketStock">Mercado: ${stock} · Sua reserva: ${owned}</div><div class="item" style="margin-top:7px"><span class="price">${money(c.price)}</span><button type="button" data-buy-market="${id}" ${stock<1||f.money<c.price?'disabled':''}>Comprar 1</button></div></div>`;
+    }
+    h+=`</div><div class="block"><h3>Itens na sua reserva</h3>`;
+    const held=Object.entries(f.inventory).filter(([,q])=>q>0);
+    if(!held.length) h+=`<div class="hint">Nenhum equipamento em estoque. Compre aqui e depois vá para Membros para equipar.</div>`;
+    for(const [id,q] of held) h+=`<div class="row"><span>${EQUIPMENT[id]?.name||id}</span><b>${q}</b></div>`;
+    h+=`</div>`;
+    p.innerHTML=h;
+    p.querySelectorAll('[data-buy-market]').forEach(b=>b.onclick=()=>{ const id=b.dataset.buyMarket; const err=BlackMarket.buy(0,id,1); if(err) log(err,'hit'); else log(`Compra concluída: <b>${EQUIPMENT[id].name}</b> entrou no estoque da facção.`,'win'); panel(); });
+  }
+
   let moveMode=null, moveFrom=null;
   function membersPanel(){
     const p=$('panel'), f=World.fac[0];
@@ -1820,19 +2001,22 @@ const UI=(()=>{
       const inv=(u.equipment||[]).map(x=>`<span class="equipChip">${EQUIPMENT[x].name}</span>`).join('')||'<span class="muted">sem equipamento</span>';
       h+=`<div class="memberCard"><div><div class="nm">${UNITS[u.kind].icon} ${UNITS[u.kind].name} #${u.id}</div>
         <div class="memberMeta">${u.personality} · ${u.experience} exp · eficiência ${Math.round(World.unitEfficiency(u))}% · ${u.status}<br>Atua em: ${u.loc?World.ix[u.loc]?.name||'em trânsito':'em trânsito'}</div>
-        <div class="equipList">${inv}</div></div><div class="btnrow"><select data-equip-select="${u.id}"><option value="">Equipar…</option>${Object.entries(EQUIPMENT).map(([k,e])=>`<option value="${k}">${e.name}</option>`).join('')}</select></div></div>`;
+        <div class="equipList">${inv}</div></div><div class="btnrow">${Object.entries(f.inventory).filter(([,q])=>q>0).map(([k])=>`<button type="button" data-equip-item="${u.id}" data-item="${k}">Equipar ${EQUIPMENT[k]?.name||k}</button>`).join('')||'<span class="uiHelp">Compre equipamentos no Mercado Negro.</span>'}</div></div>`;
     }
     h+=`<div class="block"><h3>Equipamentos disponíveis</h3>${Object.entries(EQUIPMENT).map(([k,e])=>`<div class="row"><span>${e.name} <small style="color:var(--muted)">${e.slot}</small></span><span class="uiHelp">${e.desc}</span></div>`).join('')}</div>`;
     p.innerHTML=h;
-    p.querySelectorAll('[data-equip-select]').forEach(s=>s.onchange=()=>{const u=World.units.find(x=>x.id===+s.dataset.equipSelect); if(s.value&&u){World.equip(u,s.value);u.maxhp=World.unitMaxHp(u);u.hp=Math.min(u.hp,u.maxhp);log(`${UNITS[u.kind].name} #${u.id} recebeu <b>${EQUIPMENT[s.value].name}</b>.`,'win');panel();}});
+    p.querySelectorAll('[data-equip-item]').forEach(b=>b.onclick=()=>{const u=World.units.find(x=>x.id===+b.dataset.equipItem), item=b.dataset.item; if(!u)return; const err=World.equip(u,item); if(err)log(err,'hit'); else {u.maxhp=World.unitMaxHp(u);u.hp=Math.min(u.hp,u.maxhp);log(`${UNITS[u.kind].name} #${u.id} recebeu <b>${EQUIPMENT[item].name}</b>.`,'win');} panel();});
+    p.querySelectorAll('[data-crime]').forEach(b=>b.onclick=()=>{ const err=Crime.do(0,World.selected,b.dataset.crime); if(err) log(err,'hit'); panel(); });
   }
-  function panel(){ if(tab==='terr') terrPanel(); else if(tab==='logi') logiPanel(); else if(tab==='fac') facPanel(); else membersPanel(); const p=$('panel'); p.querySelectorAll('button').forEach(b=>{if(!b.title){const tx=b.textContent.trim();if(tx)b.title=tx;}}); }
+  function panel(){ if(tab==='terr') terrPanel(); else if(tab==='logi') logiPanel(); else if(tab==='painel') painelPanel(); else if(tab==='fin') financePanel(); else if(tab==='fac') facPanel(); else if(tab==='membros') membersPanel(); else if(tab==='mercado') marketPanel(); const p=$('panel'); p.querySelectorAll('button').forEach(b=>{if(!b.title){const tx=b.textContent.trim();if(tx)b.title=tx;}}); }
 
   $('contractClose').onclick=()=>contractUI.hide();$('contractCancel').onclick=()=>contractUI.hide();$('contractModal').addEventListener('click',e=>{if(e.target.id==='contractModal')contractUI.hide();else e.stopPropagation()});addEventListener('keydown',e=>{if(e.key==='Escape'&&contractUI.open){e.preventDefault();contractUI.hide()}});$('contractSubmit').onclick=()=>{const buyer=+$('modalBuyer').value,good=$('modalGood').value,origin=+$('modalOrigin').value,qty=+$('modalQty').value,price=+$('modalPrice').value;if(!buyer||!origin||!good||qty<=0||price<=0){log('Preencha todos os campos da proposta.','hit');return}const err=Econ.createTrade(0,buyer,good,qty,price,origin);if(err){log(err,'hit');return}log(`Proposta enviada: ${Math.round(qty)} ${GOODS[good].name} para ${World.fac[buyer].short}.`,'win');contractUI.hide();panel()};
   document.querySelectorAll('button').forEach(b=>b.type='button');
   document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
     tab=b.dataset.tab; document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b)); panel();
   });
+  $('sideToggle').onclick=()=>{const side=$('side');const collapsed=side.classList.toggle('collapsed');$('sideToggle').textContent=collapsed?'❮':'❯';$('sideToggle').title=collapsed?'Abrir painel lateral':'Recolher painel lateral';$('sideToggle').setAttribute('aria-label',collapsed?'Abrir painel lateral':'Recolher painel lateral');if(!collapsed) panel();};
+  addEventListener('keydown',e=>{if(e.key.toLowerCase()==='i'&&document.activeElement?.tagName!=='INPUT'&&document.activeElement?.tagName!=='SELECT'&&document.activeElement?.tagName!=='TEXTAREA'){e.preventDefault();$('sideToggle').click();}});
   document.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{
     World.speed=+b.dataset.sp; document.querySelectorAll('[data-sp]').forEach(x=>x.classList.toggle('on',x===b));
   });
@@ -1871,17 +2055,26 @@ const UI=(()=>{
       `<button type="button" id="again">Recomeçar</button>`);
     $('again').onclick=()=>{ $('overlay').classList.remove('on'); Game.start(); };
   }
-  return {log,banner,hud,panel,overlay,end,reset(){moveMode=null;routeWiz=null;opCount=1;opDraft=null;tab='terr';
+  return {log,banner,hud,panel,overlay,end,reset(){moveMode=null;routeWiz=null;opCount=1;opDraft=null;tab='terr';$('side').classList.remove('collapsed');$('sideToggle').textContent='❯';$('sideToggle').title='Recolher painel lateral';$('sideToggle').setAttribute('aria-label','Recolher painel lateral');
     document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab==='terr'));}};
 })();
 
 /* ================================= Loop ================================= */
 const Game=(()=>{
-  let acc=0,last=performance.now(),ui=0;
+  let acc=0,last=performance.now(),ui=0,finAcc=0,prevMoney=null;
   function step(dh){
     World.h+=dh;
+    BlackMarket.tick(World.h);
+    Crime.tick(dh);
     Prod.tick(dh); Econ.tick(dh); Logi.tick(dh); City.tick(dh); City.cleanup(); Influence.tick(dh);
     Ops.tick(dh); Police.tick(dh); AI.tick(dh); Rules.tick(dh);
+    finAcc+=dh;
+    if(finAcc>=1){
+      const f=World.fac[0]; const net=prevMoney==null?0:f.money-prevMoney;
+      World.financeHistory.push({h:World.h,money:f.money,net});
+      if(World.financeHistory.length>168) World.financeHistory.shift();
+      prevMoney=f.money; finAcc=0;
+    }
   }
   function frame(now){
     const raw=Math.min(0.25,(now-last)/1000); last=now;
@@ -1891,12 +2084,13 @@ const Game=(()=>{
       while(acc>=st&&g++<400){ step(st); acc-=st; }
     }
     Render.draw();
-    ui+=raw; if(ui>1.20 && !document.getElementById('contractModal')?.classList.contains('open')){ ui=0; UI.hud(); UI.panel(); }
+    ui+=raw; if(ui>1.20 && !document.getElementById('contractModal')?.classList.contains('open')){ ui=0; UI.hud(); const side=document.getElementById('side'); const active=document.activeElement; const interacting=!!(side&&(side.matches(':hover')||side.contains(active))); if(!interacting) UI.panel(); }
     requestAnimationFrame(frame);
   }
   function start(){
     World.reset(); UI.reset(); Render.fit(); World.speed=1;
     document.querySelectorAll('[data-sp]').forEach(x=>x.classList.toggle('on',x.dataset.sp==='1'));
+    finAcc=0; prevMoney=World.fac[0].money; World.financeHistory.push({h:World.h,money:World.fac[0].money,net:0});
     UI.hud(); UI.panel();
     UI.log('Você administra o <b>Coletivo da Armação</b>, com sede no Centro. Três organizações rivais fazem o mesmo.');
   }
