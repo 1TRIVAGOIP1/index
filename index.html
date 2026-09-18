@@ -1,0 +1,1927 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Península — administração territorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07191f;--panel:#0f262c;--panel2:#0a1c21;--line:#1e424a;
+  --text:#e9e4d6;--muted:#93aaa8;--gold:#e8b84b;--red:#e2664b;--green:#74cf9a;--blue:#7fc7ff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:var(--panel2);color:var(--text);font-family:'Archivo',system-ui,sans-serif;font-size:13.5px}
+#app{display:flex;height:100vh}
+#mapWrap{flex:1;position:relative;min-width:0;background:radial-gradient(120% 90% at 42% 34%,#15505f 0%,#0a2a34 58%,#05161d 100%)}
+canvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+#hud{position:absolute;inset:0 0 auto 0;padding:9px 14px;display:flex;gap:15px;align-items:center;flex-wrap:wrap;
+  background:linear-gradient(180deg,rgba(5,20,26,.95),rgba(5,20,26,0));pointer-events:none}
+.brand{font-weight:800;font-size:16px;letter-spacing:-.02em;margin-right:2px}
+.brand small{display:block;font-size:11px;font-weight:500;color:var(--muted)}
+.res{display:flex;gap:5px;align-items:center;font-weight:700;font-variant-numeric:tabular-nums}
+.res small{color:var(--muted);font-weight:500}
+#heatBar{width:96px;height:7px;background:#1d3b42;border-radius:4px;overflow:hidden}
+#heatFill{height:100%;width:0;background:linear-gradient(90deg,#7ec8a9,#e8b84b,#e2664b)}
+#speed{position:absolute;bottom:12px;left:14px;display:flex;gap:5px;z-index:3}
+#banner{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:3;background:rgba(6,24,30,.92);
+  border:1px solid var(--gold);color:var(--gold);padding:7px 14px;border-radius:5px;font-weight:600;display:none}
+#side{width:360px;flex:0 0 360px;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+#tabs{display:flex;border-bottom:1px solid var(--line)}
+#tabs button{flex:1;border:none;border-radius:0;background:transparent;padding:11px 4px;color:var(--muted);font-weight:700;font-size:12.5px}
+#tabs button.on{color:var(--text);background:#14313a;box-shadow:inset 0 -2px 0 var(--gold)}
+#tabAlertCount{display:inline-block;min-width:15px;padding:0 4px;margin-left:4px;border-radius:8px;background:var(--red);color:#fff;font-size:10px;line-height:15px}
+.alert{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px dotted #22484f;cursor:pointer}
+.alert:hover{background:rgba(255,255,255,.03)}
+.alert i{width:7px;height:7px;border-radius:50%;margin-top:5px;flex:0 0 auto}
+.alert.sev2 i{background:var(--red)} .alert.sev1 i{background:var(--gold)} .alert.sev0 i{background:var(--muted)}
+.alert span{font-size:11.5px;line-height:1.4;color:var(--text)}
+#head{padding:11px 15px 9px;border-bottom:1px solid var(--line)}
+#head h2{margin:0;font-size:16px;font-weight:700;letter-spacing:-.01em}
+#head p{margin:3px 0 0;font-size:11.5px;color:var(--muted)}
+#panel{flex:1;overflow-y:auto;padding:12px 15px 18px}
+.block{margin-bottom:14px}
+.block h3{margin:0 0 6px;font-size:11.5px;color:var(--muted);font-weight:700}
+.row{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px dotted #22484f;font-variant-numeric:tabular-nums}
+.row:last-child{border-bottom:none}
+.row b{font-weight:700}
+.bar{height:6px;background:#1d3b42;border-radius:3px;overflow:hidden;margin:3px 0 2px}
+.bar i{display:block;height:100%;background:var(--green)}
+button{font-family:inherit;font-size:12.5px;font-weight:600;color:var(--text);background:#1a3b43;border:1px solid #2b5964;
+  border-radius:5px;padding:6px 9px;cursor:pointer}
+button:hover:not(:disabled){background:#265059}
+button:disabled{opacity:.34;cursor:not-allowed}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button.on{background:var(--gold);color:#20180a;border-color:#c79c33}
+button.danger{border-color:#7a3a2d;color:#f0a793}
+.btnrow{display:flex;gap:5px;flex-wrap:wrap}
+.item{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px}
+.item .nm{font-weight:700}
+.item .ct{font-size:11px;color:var(--muted);line-height:1.35}
+.chip{display:inline-block;padding:2px 7px;border-radius:20px;background:#1d3b42;font-size:11px;font-weight:600;margin:0 4px 4px 0}
+.tag{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:6px}
+.hint{font-size:11.5px;color:var(--muted);line-height:1.55}
+.warn{color:var(--red)}
+#log{height:120px;overflow-y:auto;padding:7px 15px;font-size:11.5px;line-height:1.5;background:var(--panel2);border-top:1px solid var(--line);color:var(--muted)}
+#log b{color:var(--text)}.hit{color:var(--red)}.win{color:var(--green)}.cop{color:var(--blue)}
+#overlay{position:absolute;inset:0;display:none;place-items:center;background:rgba(3,14,19,.9);padding:20px;z-index:6}
+#overlay.on{display:grid}
+#overlay .card{max-width:580px;max-height:88vh;overflow-y:auto;background:var(--panel);border:1px solid #2b5964;border-radius:8px;padding:24px 26px}
+#overlay h1{margin:0 0 4px;font-size:24px;letter-spacing:-.02em}
+#overlay p{margin:0 0 13px;color:var(--muted);line-height:1.55}
+#overlay ol{margin:0 0 16px;padding-left:20px;line-height:1.65}
+/* UI polish + resilient contract modal */
+button{transition:background .14s ease,border-color .14s ease,transform .06s ease,box-shadow .14s ease}
+button:active:not(:disabled){transform:translateY(1px)}
+.block{background:linear-gradient(180deg,rgba(20,49,58,.28),rgba(10,28,33,.12));border:1px solid rgba(43,89,100,.45);border-radius:8px;padding:9px 10px}
+.block h3{letter-spacing:.04em;text-transform:uppercase}
+#tabs button:hover:not(:disabled){background:#183b45}
+#panel{scrollbar-width:thin;scrollbar-color:#2b5964 transparent}
+.modalBackdrop{position:fixed;inset:0;background:rgba(2,10,14,.76);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
+.modalBackdrop.open{display:flex}.appModal{width:min(620px,94vw);max-height:88vh;overflow:auto;background:linear-gradient(180deg,#102b32,#0b2026);border:1px solid #376875;border-radius:12px;box-shadow:0 22px 70px rgba(0,0,0,.55);padding:16px}.appModal header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.appModal h2{margin:0;font-size:17px}.appModal header p{margin:3px 0 0;color:var(--muted);font-size:11.5px}.modalGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.modalField{display:flex;flex-direction:column;gap:4px}.modalField label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}.modalField input,.modalField select{width:100%;background:#0a1c21;color:var(--text);border:1px solid #2b5964;border-radius:6px;padding:8px;font:inherit}.modalActions{display:flex;justify-content:flex-end;gap:7px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}.primary{background:#c99d38;color:#171208;border-color:#d8b14f}.primary:hover:not(:disabled){background:#dfb957}@media(max-width:620px){.modalGrid{grid-template-columns:1fr}}
+@media(max-width:900px){#app{flex-direction:column}#side{width:100%;flex:0 0 auto;max-height:52vh;border-left:none;border-top:1px solid var(--line)}#mapWrap{flex:1 1 48vh}#log{height:70px}}
+
+/* vNext interface: clear hierarchy, discreet guidance, stable controls */
+:root{--panel3:#132f37;--line2:#2b5964;--focus:#f2ca68}
+button{min-height:32px;border-radius:7px;cursor:pointer;background:#102b32;color:var(--text);border:1px solid var(--line2);font:600 12px Archivo,sans-serif;padding:6px 9px}
+button:hover:not(:disabled){background:#183d46;border-color:#477b87;box-shadow:0 2px 10px rgba(0,0,0,.16)}
+button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+button.primary{background:linear-gradient(180deg,#d8b052,#b78a2e);color:#181309;border-color:#e7c66b}
+button.on{background:#1d4650;border-color:#5c8e99}
+button:disabled{opacity:.42;cursor:not-allowed}
+#tabs{padding:7px;gap:5px;display:grid;grid-template-columns:repeat(5,1fr);background:#091d23;border-bottom:1px solid var(--line)}
+#tabs button{font-size:11px;padding:7px 5px;white-space:nowrap}
+#head{background:linear-gradient(180deg,rgba(20,55,64,.32),rgba(15,38,44,.05))}
+#head h2{letter-spacing:-.015em}
+#panel{padding-bottom:14px}
+.block{box-shadow:inset 0 1px rgba(255,255,255,.025),0 4px 16px rgba(0,0,0,.08);margin-bottom:7px}
+.block h3{margin:0 0 8px;font-size:10px;color:#b9cfce;letter-spacing:.08em}
+.row{min-height:24px}
+.hint{background:rgba(127,199,255,.035);border-left:2px solid rgba(127,199,255,.22);padding-left:8px}
+.item{padding:5px 0}
+.nm{font-size:12px}
+.ct{font-size:10.5px}
+.uiHelp{font-size:10.5px;color:var(--muted);margin-top:5px;line-height:1.45}
+.complexBadge{display:inline-flex;align-items:center;gap:5px;padding:3px 7px;border-radius:999px;background:#173840;border:1px solid #28535c;font-size:10px;color:#d7e4e1}
+.specialtyCard{border-left:3px solid var(--gold)}
+.statGood{color:var(--green)}.statWarn{color:var(--gold)}
+.memberCard{display:grid;grid-template-columns:1fr auto;gap:8px;padding:9px;border:1px solid #234c55;border-radius:7px;background:rgba(8,28,34,.5);margin-bottom:7px}
+.memberMeta{font-size:10.5px;color:var(--muted);line-height:1.45}
+.equipList{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.equipChip{padding:2px 6px;border-radius:5px;background:#1c3d45;border:1px solid #2b5964;font-size:10px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="mapWrap">
+    <canvas id="cv"></canvas>
+    <div id="hud">
+      <div class="brand">Península<small id="clock">Dia 1 · 06:00</small></div>
+      <div class="res"><span>💵</span><span id="rMoney">0</span><small id="rNet"></small></div>
+      <div class="res"><span>🏳️</span><span id="rTerr">0</span></div>
+      <div class="res"><span>👤</span><span id="rUnits">0</span></div>
+      <div class="res"><span>🚨</span><div id="heatBar"><i id="heatFill"></i></div><small id="heatTxt">0%</small></div>
+    </div>
+    <div id="speed">
+      <button type="button" data-sp="0">❚❚</button><button type="button" data-sp="1" class="on">1×</button>
+      <button type="button" data-sp="3">3×</button><button type="button" data-sp="8">8×</button><button type="button" data-sp="20">20×</button>
+    </div>
+    <div id="banner"></div>
+    <div id="overlay"><div class="card" id="overlayCard"></div></div>
+  </div>
+  <div id="contractModal" class="modalBackdrop" aria-hidden="true"><section class="appModal" role="dialog" aria-modal="true" aria-labelledby="contractTitle"><header><div><h2 id="contractTitle">Nova proposta de fornecimento</h2><p>Negocie a venda antes de reservar e transportar a mercadoria.</p></div><button type="button" id="contractClose" aria-label="Fechar">✕</button></header><div class="modalGrid"><div class="modalField"><label for="modalBuyer">Comprador</label><select id="modalBuyer"></select></div><div class="modalField"><label for="modalGood">Mercadoria</label><select id="modalGood"></select></div><div class="modalField"><label for="modalOrigin">Origem</label><select id="modalOrigin"></select></div><div class="modalField"><label for="modalQty">Quantidade</label><input id="modalQty" type="number" min="1" value="25"></div><div class="modalField"><label for="modalPrice">Preço por unidade</label><input id="modalPrice" type="number" min="1" value="65"></div></div><div class="hint" id="modalContractHint" style="margin-top:10px">A mercadoria permanece no estoque até a logística assumir a entrega.</div><div class="modalActions"><button type="button" id="contractCancel">Cancelar</button><button type="button" id="contractSubmit" class="primary">Enviar proposta</button></div></section></div>
+  <aside id="side">
+    <div id="tabs">
+      <button type="button" data-tab="terr" class="on">Território</button>
+      <button type="button" data-tab="logi">Logística</button>
+      <button type="button" data-tab="painel">Painel<span id="tabAlertCount"></span></button>
+      <button type="button" data-tab="fac">Facção</button>
+      <button type="button" data-tab="membros">Membros</button>
+    </div>
+    <div id="head"><h2 id="selName">Península</h2><p id="selSub">Selecione um território no mapa.</p></div>
+    <div id="panel"></div>
+    <div id="log" aria-live="polite"></div>
+  </aside>
+</div>
+
+<script>
+'use strict';
+/* ==========================================================================
+   PENÍNSULA — simulação administrativa territorial (ficcional)
+   Módulos: CONF · GOODS · MapData · World · Econ · Prod · Logi · Influence
+            · Ops(conflito) · Police · AI · Render · UI · Loop
+   Estado vive só em World e é serializável (pronto para servidor futuro).
+   Toda mecânica opera em HORAS DE JOGO. 1 h ≈ 11 s reais em 1×.
+   ========================================================================== */
+
+/* ================================ CONF ================================== */
+const CONF = {
+  tickReal: 1/20,
+  hoursPerRealSecond: 1/11,     // ritmo base deliberadamente lento
+  victoryShare: 0.6,
+  holdHours: 36,                // tempo segurando a maioria para vencer
+  influenceFlip: 55,            // influência para assumir território neutro
+  influenceLose: 22,            // abaixo disso o dono perde o território
+  heatMax: 100, heatDecay: 0.9, // por hora
+  raidAt: 70,
+};
+
+/* =============================== GOODS ================================== */
+/* Mercadorias fictícias. "insumo" é comprado em portos e consumido pelas
+   oficinas; nada surge no destino — tudo precisa ser transportado. */
+const GOODS = {
+  insumo: { name:'Insumo',       ab:'INS', color:'#b9ae93', buy:38,  base:0,   weight:1 },
+  cinza:  { name:'Carga Cinza',  ab:'CZA', color:'#9fb0b5', buy:0,   base:78,  weight:1 },
+  ambar:  { name:'Carga Âmbar',  ab:'AMB', color:'#d8a85e', buy:0,   base:185, weight:1 },
+  rubra:  { name:'Carga Rubra',  ab:'RUB', color:'#cf6a5a', buy:0,   base:410, weight:1 },
+  fuel:   { name:'Combustível',  ab:'CMB', color:'#7fc7ff', buy:19,  base:0,   weight:1 },
+  ammo:   { name:'Munição',      ab:'MUN', color:'#c8b6e8', buy:52,  base:0,   weight:1 },
+  armas:  { name:'Armamento',    ab:'ARM', color:'#b7a58c', buy:110, base:0,   weight:1 },
+};
+const GK = Object.keys(GOODS);
+const SELLABLE = ['cinza','ambar','rubra'];
+
+/* ============================ TIPOS/ESTRUTURAS ========================== */
+const TYPES = {
+  porto:   { name:'Porto',       color:'#6fa8bd', desc:'Compra insumo, combustível e munição do mercado externo.' },
+  oficina: { name:'Oficina',     color:'#9a8fb5', desc:'Converte insumo em Carga Âmbar e, com infraestrutura, Carga Rubra.' },
+  sitio:   { name:'Sítio',       color:'#8fae6e', desc:'Produz Carga Cinza sem insumo, lentamente.' },
+  mercado: { name:'Mercado',     color:'#d8a85e', desc:'Escoa mercadoria conforme a demanda local. Preço cai se inundado.' },
+  bairro:  { name:'Bairro',      color:'#b2a894', desc:'População alta. Demanda modesta e arrecadação de rua.' },
+};
+
+const BUILD = {
+  deposito: { name:'Depósito',   icon:'▣', cost:2600, hours:30, upkeep:3, desc:'+600 de capacidade de estoque.' },
+  ponto:    { name:'Ponto',      icon:'◉', cost:1900, hours:22, upkeep:4, desc:'+60% de escoamento e +50% de ganho de influência.' },
+  garagem:  { name:'Garagem',    icon:'⛭', cost:3200, hours:36, upkeep:5, desc:'Permite montar veículos e reparar carga perdida.' },
+  refugio:  { name:'Refúgio',    icon:'⌂', cost:2400, hours:28, upkeep:4, desc:'+35% de defesa e recuperação de pessoal.' },
+};
+
+const UNITS = {
+  operador:  { name:'Operador',  icon:'●', cost:620,  hours:10, upkeep:7,  atk:2,  hp:60,  speed:58, inf:0.9 },
+  seguranca: { name:'Segurança', icon:'▮', cost:1450, hours:20, upkeep:19, atk:11, hp:130, speed:52, inf:0.2 },
+};
+const VEHICLES = {
+  van:     { name:'Van',      icon:'▬', cost:2100, hours:20, upkeep:6,  cap:60,  speed:115, burn:0.16, fuelCap:80,  sea:false },
+  caminhao:{ name:'Caminhão', icon:'▭', cost:4200, hours:34, upkeep:11, cap:190, speed:72,  burn:0.30, fuelCap:220, sea:false },
+  lancha:  { name:'Lancha',   icon:'◆', cost:3600, hours:30, upkeep:10, cap:110, speed:96,  burn:0.26, fuelCap:180, sea:true },
+};
+
+const FACTIONS = [
+  { id:0, name:'Coletivo da Armação',  short:'Armação',   color:'#e8b84b', human:true,  home:'centro' },
+  { id:1, name:'Grupo de Manguinhos',  short:'Manguinhos',color:'#5aa9e6', human:false, home:'manguinhos' },
+  { id:2, name:'Comissão de Geribá',   short:'Geribá',    color:'#d4553f', human:false, home:'geriba' },
+  { id:3, name:'Núcleo da Brava',      short:'Brava',     color:'#8e6fd1', human:false, home:'brava' },
+];
+
+/* ======================= Especializações e equipamentos =====================
+   Itens e nomes são deliberadamente fictícios; seus efeitos são abstratos de
+   simulação e não descrevem fabricação ou uso real. */
+const FACTION_SPECIALTIES = {
+  0:{name:'Comércio e distribuição',desc:'Melhor margem em mercados e contratos.',tradeMult:1.10,prod:null},
+  1:{name:'Fabricação de armamentos',desc:'Oficinas de Manguinhos convertem insumos em Armamento com mais eficiência.',tradeMult:1,prod:'armas'},
+  2:{name:'Fabricação de munição',desc:'Complexos de Geribá produzem Munição com menor consumo de insumo.',tradeMult:1,prod:'ammo'},
+  3:{name:'Logística e frota',desc:'Rotas da Brava gastam menos combustível e sua frota recupera condição mais rápido.',tradeMult:1,prod:'logistica'}
+};
+const COMPLEXES = {
+  rasa:{name:'Complexo Agrícola',role:'produção de Carga Cinza',bonus:'produção +12%'},
+  manguinhos:{name:'Complexo de Armamentos',role:'fabricação de Armamento',bonus:'armamento +35% se controlado por Manguinhos'},
+  tartaruga:{name:'Complexo Residencial',role:'moradia e arrecadação local',bonus:'arrecadação +8%'},
+  canto:{name:'Complexo Comercial',role:'comércio de bairro',bonus:'demanda +8%'},
+  joaofernandes:{name:'Complexo de Distribuição',role:'mercado e escoamento',bonus:'capacidade da Boca +20'},
+  baiaformosa:{name:'Complexo de Abastecimento',role:'entrada de insumos e combustível',bonus:'compras portuárias -5%'},
+  portobarra:{name:'Complexo Industrial',role:'transformação e manutenção',bonus:'produção de oficina +15%'},
+  cembracas:{name:'Complexo de Matéria-Prima',role:'produção de insumos naturais',bonus:'produção de Carga Cinza +18%'},
+  centro:{name:'Complexo Financeiro',role:'mercado central e contratos',bonus:'receita comercial +15%'},
+  ferradurinha:{name:'Complexo de Armazenagem',role:'estoque e reserva',bonus:'capacidade +180'},
+  tucuns:{name:'Complexo de Produção Rural',role:'produção de Carga Cinza',bonus:'produção +15%'},
+  geriba:{name:'Complexo de Munição',role:'fabricação de Munição',bonus:'munição +40% se controlado por Geribá'},
+  josegoncalves:{name:'Complexo de Manutenção',role:'oficina e reparos',bonus:'frota recupera condição mais rápido'},
+  ferradura:{name:'Complexo Comercial Sul',role:'mercado secundário',bonus:'demanda +10%'},
+  brava:{name:'Complexo de Segurança',role:'apoio operacional e defesa',bonus:'defesa +18%'},
+  ilhafeia:{name:'Complexo de Pesquisa',role:'pesquisa e protótipos',bonus:'produção especializada +10%'},
+  ilhabranca:{name:'Complexo Portuário',role:'comércio marítimo',bonus:'rotas marítimas +10%'},
+  ilhagravatas:{name:'Complexo Extrativista',role:'produção de matéria-prima',bonus:'produção +20%'}
+};
+const EQUIPMENT = {
+  ay47:{name:'AY-47',slot:'arma',desc:'Armamento fictício equilibrado.',atk:5,eff:4},
+  gloky:{name:'GLOKY',slot:'arma',desc:'Armamento fictício leve.',atk:3,eff:7},
+  carabina9:{name:'Carabina 9X',slot:'arma',desc:'Armamento fictício de apoio.',atk:7,eff:2},
+  munA:{name:'Munição A-9',slot:'munição',desc:'Munição fictícia compatível com equipamentos leves.',ammo:12},
+  munB:{name:'Munição BX',slot:'munição',desc:'Munição fictícia de maior rendimento operacional.',ammo:18},
+  radio:{name:'Rádio AX',slot:'apoio',desc:'Melhora coordenação e eficiência.',eff:8},
+  kitLog:{name:'Kit Logístico',slot:'apoio',desc:'Melhora tarefas de transporte e administração.',eff:10},
+  colete:{name:'Colete Tático',slot:'proteção',desc:'Proteção abstrata para a simulação.',hp:18,eff:2}
+};
+
+
+/* =============================== MapData ================================ */
+const LAT = [
+  [[140,326],[292,248],[472,204],[684,194],[880,228],[1046,300]],
+  [[150,400],[300,330],[482,300],[692,290],[882,314],[1052,364]],
+  [[160,462],[306,420],[486,400],[696,394],[876,406],[1046,430]],
+  [[176,522],[316,532],[492,556],[702,560],[872,520],[1032,478]],
+];
+//            id              nome                tipo       pop    infra  valor
+const CELLS = [
+ [['rasa','Praia Rasa','sitio',2200,2,1],['manguinhos','Manguinhos','porto',8400,3,3],
+  ['tartaruga','Tartaruga','bairro',6100,2,1],['canto','Praia do Canto','bairro',9300,3,2],
+  ['joaofernandes','João Fernandes','mercado',5200,3,2]],
+ [['baiaformosa','Baía Formosa','porto',4300,2,3],['portobarra','Porto da Barra','oficina',7200,3,2],
+  ['cembracas','Cem Braças','sitio',2400,2,1],['centro','Centro','mercado',14200,4,3],
+  ['ferradurinha','Ferradurinha','bairro',6000,2,1]],
+ [['tucuns','Tucuns','sitio',1500,1,1],['geriba','Geribá','mercado',11300,3,3],
+  ['josegoncalves','José Gonçalves','oficina',3100,2,2],['ferradura','Ferradura','mercado',8100,3,2],
+  ['brava','Praia Brava','oficina',4100,3,2]],
+];
+const ISLANDS = [
+  { id:'ilhafeia', name:'Ilha Feia', type:'oficina', pop:260, infra:2, val:2, c:[560,120], r:44, links:['tartaruga','canto'] },
+  { id:'ilhabranca', name:'Ilha Branca', type:'porto', pop:420, infra:2, val:3, c:[1142,236], r:40, links:['joaofernandes','ferradurinha'] },
+  { id:'ilhagravatas', name:'Ilha Gravatás', type:'sitio', pop:180, infra:1, val:1, c:[604,662], r:42, links:['josegoncalves','ferradura'] },
+];
+
+const MapData = (()=>{
+  const hash=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return ((h>>>0)%2000)/1000-1;};
+  const mid=(a,b,k,amp)=>{const dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,o=hash(k)*amp;
+    return [(a[0]+b[0])/2-dy/l*o,(a[1]+b[1])/2+dx/l*o];};
+  const circle=(cx,cy,r,s)=>{const p=[];for(let i=0;i<14;i++){const a=i/14*Math.PI*2,rr=r*(1+hash(s+i)*.18);p.push([cx+Math.cos(a)*rr,cy+Math.sin(a)*rr]);}return p;};
+  const cen=p=>{let x=0,y=0;for(const q of p){x+=q[0];y+=q[1];}return [x/p.length,y/p.length];};
+  function build(){
+    const list=[],ix={},A=15;
+    for(let r=0;r<3;r++)for(let c=0;c<5;c++){
+      const [id,name,type,pop,infra,val]=CELLS[r][c];
+      const tl=LAT[r][c],tr=LAT[r][c+1],br=LAT[r+1][c+1],bl=LAT[r+1][c];
+      const poly=[tl,mid(tl,tr,`h${r}-${c}`,A),tr,mid(tr,br,`v${r}-${c+1}`,A),br,mid(br,bl,`h${r+1}-${c}`,A),bl,mid(bl,tl,`v${r}-${c}`,A)];
+      const t={id,name,type,pop,infra,val,poly,center:cen(poly),island:false,neighbors:[]};
+      list.push(t);ix[id]=t;
+    }
+    for(let r=0;r<3;r++)for(let c=0;c<5;c++){
+      const t=ix[CELLS[r][c][0]];
+      if(c>0)t.neighbors.push(CELLS[r][c-1][0]); if(c<4)t.neighbors.push(CELLS[r][c+1][0]);
+      if(r>0)t.neighbors.push(CELLS[r-1][c][0]); if(r<2)t.neighbors.push(CELLS[r+1][c][0]);
+    }
+    for(const i of ISLANDS){
+      const t={id:i.id,name:i.name,type:i.type,pop:i.pop,infra:i.infra,val:i.val,
+        poly:circle(i.c[0],i.c[1],i.r,i.id),center:[i.c[0],i.c[1]],island:true,neighbors:i.links.slice()};
+      list.push(t);ix[i.id]=t;
+      for(const l of i.links) ix[l].neighbors.push(i.id);
+    }
+    return {list,ix};
+  }
+  const inPoly=(p,poly)=>{let o=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];
+    if(((yi>p[1])!==(yj>p[1]))&&(p[0]<(xj-xi)*(p[1]-yi)/(yj-yi)+xi))o=!o;}return o;};
+  return {build,inPoly};
+})();
+
+/* ================================ World ================================= */
+const World = {
+  h:6, uid:1, terr:[], ix:{}, fac:[], units:[], veh:[], ops:[], trades:[], loans:[], events:[], relations:{}, over:false, speed:1, selected:null,
+
+  reset(){
+    const {list,ix}=MapData.build();
+    this.terr=list; this.ix=ix; this.units=[]; this.veh=[]; this.ops=[]; this.trades=[]; this.loans=[]; this.events=[];
+    this.h=6; this.uid=1; this.over=false; this.selected=null;
+    this.fac=FACTIONS.map(f=>({...f, money:9000, heat:0, alive:true, hold:0, lastOp:-200, mood:'consolidar',drivers:0,admins:2,credit:0,reputation:50,specialty:FACTION_SPECIALTIES[f.id]}));
+    this.relations={};
+    for(let a=0;a<this.fac.length;a++) for(let b=0;b<this.fac.length;b++) this.relations[`${a}:${b}`]=a===b?'aliada':'neutra';
+    // Um parceiro comercial inicial permite testar o sistema imediatamente.
+    this.relations['0:1']=this.relations['1:0']='aliada';
+
+    for(const t of list){
+      t.owner=null; t.stock={}; for(const g of GK) t.stock[g]=0;
+      t.buildings={}; for(const b in BUILD) t.buildings[b]=false;
+      t.pointStock={}; for(const g of SELLABLE) t.pointStock[g]=0;
+      t.pointCap=80; t.heat=0; t.eventMult=1;
+      t.works=[];                       // obras e recrutamentos em andamento
+      t.inf={0:0,1:0,2:0,3:0};
+      t.unrest=0; t.fighting=0;
+      t.price={}; for(const g of SELLABLE) t.price[g]=1;
+      t.demand=this.demandOf(t); t.complex=COMPLEXES[t.id]||{name:'Complexo Local',role:TYPES[t.type].name,bonus:'efeito padrão'};
+    }
+    for(const f of this.fac){
+      const t=ix[f.home];
+      t.owner=f.id; t.inf[f.id]=80; t.buildings.ponto=true; t.buildings.deposito=true;
+      t.stock.fuel=320; t.stock.ammo=90; t.stock.insumo=120; t.stock.armas= f.id===1?24:8;
+      t.stock.munA=0; t.stock.munB=0;
+      this.spawnUnit(f.id,'operador',t.id); this.spawnUnit(f.id,'operador',t.id);
+      this.spawnUnit(f.id,'seguranca',t.id);
+      this.spawnVeh(f.id,'van',t.id);
+      if(f.id===0) this.spawnVeh(f.id,'van',t.id);
+      f.drivers=World.veh.filter(v=>v.f===f.id).length; f.patrimony=World.veh.filter(v=>v.f===f.id).reduce((a,v)=>a+VEHICLES[v.kind].cost,0);
+    }
+  },
+  demandOf(t){
+    const scale=Math.max(.35,t.pop/6000), d={};
+    const p={
+      centro:{cinza:1.75,ambar:1.02,rubra:.40}, geriba:{cinza:1.30,ambar:1.00,rubra:.30},
+      joaofernandes:{cinza:.82,ambar:.92,rubra:.38}, manguinhos:{cinza:.62,ambar:.48,rubra:.16},
+      canto:{cinza:1.10,ambar:.56,rubra:.18}, ferradura:{cinza:.88,ambar:.62,rubra:.22},
+      rasa:{cinza:.55,ambar:.22,rubra:.05}, tucuns:{cinza:.48,ambar:.18,rubra:.04}, brava:{cinza:.68,ambar:.50,rubra:.17}
+    }[t.id] || (t.type==='mercado'?{cinza:1.35,ambar:.78,rubra:.27}:t.type==='bairro'?{cinza:.82,ambar:.28,rubra:.07}:{cinza:.15,ambar:.05,rubra:.01});
+    for(const g of SELLABLE) d[g]=(p[g]||0)*scale;
+    return d;
+  },
+  cap(t){ return 260*t.infra + (t.buildings.deposito?600:0) + (t.id==='ferradurinha'?180:0); },
+  load(t){ let s=0; for(const g of GK) s+=t.stock[g]; return s; },
+  defBonus(t){ let b=t.island?0.2:0; if(t.buildings.refugio)b+=0.35; if(t.buildings.ponto)b+=0.1;
+    b += (t.inf[t.owner]||0)/300; return b; },
+  owned(f){ return this.terr.filter(t=>t.owner===f); },
+  at(tid,f,kind){ return this.units.filter(u=>u.loc===tid && u.state==='idle' && (f===undefined||u.f===f) && (!kind||u.kind===kind)); },
+  relation(a,b){ return this.relations[`${a}:${b}`]||'neutra'; },
+  setRelation(a,b,r){ this.relations[`${a}:${b}`]=r; this.relations[`${b}:${a}`]=r; },
+  equip(u,item){
+    if(!u||!EQUIPMENT[item]) return 'Equipamento inválido.';
+    const slot=EQUIPMENT[item].slot; u.equipment=(u.equipment||[]).filter(x=>EQUIPMENT[x]?.slot!==slot); u.equipment.push(item); return null;
+  },
+  unitEfficiency(u){
+    const base=(u.efficiency||70)+(u.experience||0)*0.35;
+    return base+(u.equipment||[]).reduce((s,x)=>s+(EQUIPMENT[x]?.eff||0),0);
+  },
+  unitAtk(u){ return UNITS[u.kind].atk+(u.equipment||[]).reduce((s,x)=>s+(EQUIPMENT[x]?.atk||0),0); },
+  unitMaxHp(u){ return UNITS[u.kind].hp+(u.equipment||[]).reduce((s,x)=>s+(EQUIPMENT[x]?.hp||0),0); },
+
+
+  spawnUnit(f,kind,tid){
+    const U=UNITS[kind], t=this.ix[tid];
+    const u={id:this.uid++,f,kind,hp:U.hp,maxhp:U.hp,loc:tid,state:'idle',
+      x:t.center[0]+(Math.random()*30-15),y:t.center[1]+(Math.random()*22-11),path:[],ammo:0,op:null,equipment:[],personality:['pragmático','cauteloso','ambicioso','disciplinado'][Math.floor(Math.random()*4)],experience:Math.floor(Math.random()*21),efficiency:70+Math.floor(Math.random()*21),status:'ativo'};
+    this.units.push(u); return u;
+  },
+  spawnVeh(f,kind,tid){
+    const t=this.ix[tid];
+    const V=VEHICLES[kind];
+    const v={id:this.uid++,f,kind,loc:tid,x:t.center[0]+(Math.random()*24-12),y:t.center[1]+18,
+      cargo:{},qty:0,fuel:Math.round(V.fuelCap*0.7),condition:100,path:[],route:null,phase:'idle',note:'',tradeId:null};
+    for(const g of GK) v.cargo[g]=0;
+    this.veh.push(v); return v;
+  },
+  dist(a,b){ const A=this.ix[a].center,B=this.ix[b].center; return Math.hypot(A[0]-B[0],A[1]-B[1]); },
+  path(from,to,sea){
+    const ok=id=>{ const t=this.ix[id]; return t.island? sea : true; };
+    if(!ok(to)||!ok(from)) return null;
+    const prev={},q=[from],seen={[from]:1};
+    while(q.length){ const c=q.shift();
+      if(c===to){ const p=[];let k=to;while(k!==from){p.unshift(k);k=prev[k];}return p; }
+      for(const n of this.ix[c].neighbors) if(!seen[n]&&ok(n)){seen[n]=1;prev[n]=c;q.push(n);} }
+    return null;
+  },
+  pathLen(p,from){ let d=0,c=from; for(const n of p){ d+=this.dist(c,n); c=n; } return d; },
+  upkeep(fid){
+    let u=0;
+    for(const t of this.owned(fid)){
+      u+=t.pop/1000*1.9+t.infra*2.2;
+      for(const b in t.buildings) if(t.buildings[b]) u+=BUILD[b].upkeep;
+    }
+    for(const x of this.units) if(x.f===fid) u+=UNITS[x.kind].upkeep;
+    for(const v of this.veh) if(v.f===fid) u+=VEHICLES[v.kind].upkeep+(v.condition<70?1.5:0);
+    u+=(this.fac[fid]?.admins||0)*3;
+    u+=Math.max(0,this.veh.filter(v=>v.f===fid).length-(this.fac[fid]?.drivers||0))*8;
+    return u;
+  },
+};
+
+/* ================================= Prod ================================= */
+const Prod = {
+  tick(dh){
+    for(const t of World.terr){
+      if(t.owner===null) continue;
+      const eff = (1 - t.unrest/120) * (0.55 + t.infra*0.18);
+      if(eff<=0) continue;
+      const room = World.cap(t)-World.load(t);
+      if(t.type==='sitio'){
+        const q=Math.min(0.95*eff*dh, Math.max(0,room));
+        t.stock.cinza+=q;
+      }
+      if(t.type==='oficina'){
+        const rate=0.75*eff*dh;
+        const use=Math.min(t.stock.insumo, rate*1.6, Math.max(0,room)*1.6);
+        if(use>0){ t.stock.insumo-=use; t.stock.ambar+=use*0.62; }
+        if(t.infra>=3 && t.stock.insumo>0 && t.stock.cinza>0){
+          const u2=Math.min(t.stock.insumo, t.stock.cinza, 0.28*eff*dh);
+          t.stock.insumo-=u2; t.stock.cinza-=u2; t.stock.rubra+=u2*0.5;
+        }
+      }
+      // Complexos especializados: cada território tem uma função econômica própria.
+      const owner=World.fac[t.owner], sp=FACTION_SPECIALTIES[t.owner];
+      if(t.type==='oficina' && t.id==='manguinhos' && t.owner===1){
+        const rate=Math.min(t.stock.insumo,0.34*eff*dh); if(rate>0){t.stock.insumo-=rate;t.stock.armas+=(rate*0.55);}
+      }
+      if(t.type==='mercado' && t.id==='geriba' && t.owner===2){
+        const rate=Math.min(t.stock.insumo,0.30*eff*dh); if(rate>0){t.stock.insumo-=rate;t.stock.ammo+=(rate*0.72);}
+      }
+      if(t.id==='ilhagravatas' || t.id==='cembracas' || t.id==='tucuns' || t.id==='rasa'){ t.stock.cinza += Math.min(Math.max(0,room)*0.08,0.18*eff*dh); }
+      // obras e recrutamentos — fila sequencial: só a primeira ordem do território avança;
+      // as demais aguardam. Isso obriga a decidir o que fazer primeiro em cada território.
+      if(t.works.length){
+        const w=t.works[0]; w.p+=dh;
+        if(w.p>=w.need){
+          t.works.shift();
+          if(w.type==='build'){ t.buildings[w.k]=true; if(t.owner===0) UI.log(`<b>${BUILD[w.k].name}</b> pronto em ${t.name}.`); }
+          if(w.type==='unit'){ World.spawnUnit(t.owner,w.k,t.id); if(t.owner===0) UI.log(`${UNITS[w.k].name} disponível em ${t.name}.`); }
+          if(w.type==='veh'){ World.spawnVeh(t.owner,w.k,t.id); if(t.owner===0) UI.log(`${VEHICLES[w.k].name} saiu da garagem em ${t.name}.`); }
+          if(w.type==='infra'){ t.infra++; t.demand=World.demandOf(t); if(t.owner===0) UI.log(`Infraestrutura de ${t.name} agora é nível ${t.infra}.`); }
+        }
+      }
+      t.unrest=Math.max(0,t.unrest-2.4*dh);
+      t.fighting=Math.max(0,t.fighting-dh);
+    }
+  }
+};
+
+/* ================================= Econ ================================= */
+const Econ = {
+  tick(dh){
+    for(const f of World.fac){
+      f.money-=World.upkeep(f.id)*dh;
+      f.heat=Math.max(0,f.heat-CONF.heatDecay*dh);
+      if(f.money<-4000&&f.alive) this.collapse(f);
+    }
+    const day=Math.floor(World.h/24)+1, season=1+Math.sin(day*Math.PI/9)*.12;
+    for(const t of World.terr){
+      t.heat=Math.max(0,(t.heat||0)-.025*dh);
+      t.eventMult=t.eventMult||1;
+      const base=World.demandOf(t);
+      for(const g of SELLABLE){
+        const excess=(t.pointStock[g]||0)/Math.max(.5,base[g]*18);
+        t.demand[g]=Math.max(.001,base[g]*season*t.eventMult*(1-t.heat/180));
+        t.price[g]=Math.max(.38,Math.min(1.25,t.price[g]+.006*dh-Math.min(.55,excess)*.010*dh));
+      }
+      if(t.owner===null) continue;
+      const f=World.fac[t.owner], control=Math.min(1,(t.inf[t.owner]||0)/70), mult=(1-t.unrest/110)*control;
+      if(mult<=0) continue;
+      if(t.buildings.ponto){
+        for(const g of SELLABLE){
+          const sold=Math.min(t.pointStock[g],t.demand[g]*mult*dh);
+          if(sold<=0) continue;
+          t.pointStock[g]-=sold;
+          f.money+=sold*GOODS[g].base*t.price[g]*(.8+t.val*.14)*(FACTION_SPECIALTIES[f.id]?.tradeMult||1)*(t.id==='centro'?1.15:1);
+          t.heat=Math.min(100,t.heat+sold*(g==='rubra'?.75:g==='ambar'?.28:.10));
+          f.heat=Math.min(CONF.heatMax,f.heat+sold*(g==='rubra'?.55:g==='ambar'?.22:.07));
+        }
+      }
+      if(t.type==='bairro'||t.type==='mercado') f.money+=t.pop/1000*.55*control*dh*(1-t.heat/150);
+    }
+    this.serviceLoans(dh);
+  },
+
+
+  buy(t,g,qty){
+    const f=World.fac[t.owner];
+    if(t.type!=='porto'||!GOODS[g].buy) return 'Só portos compram do mercado externo.';
+    const room=World.cap(t)-World.load(t);
+    qty=Math.min(qty,Math.floor(room));
+    if(qty<=0) return 'Sem espaço de estoque aqui.';
+    const cost=qty*GOODS[g].buy;
+    if(f.money<cost) return 'Dinheiro insuficiente.';
+    f.money-=cost; t.stock[g]+=qty;
+    return null;
+  },
+
+  distribute(t,g,qty){
+    if(!t||t.owner===null) return 'Território sem controle.';
+    if(!t.buildings.ponto) return 'Construa um Ponto/Boca para distribuir carga.';
+    if(!SELLABLE.includes(g)) return 'Essa mercadoria não é distribuída em Pontos.';
+    qty=Math.min(Math.max(0,qty||0),t.stock[g],Math.max(0,80-t.pointStock[g]));
+    if(qty<=0) return 'Sem carga disponível ou a Boca já está cheia.';
+    t.stock[g]-=qty;
+    t.pointStock[g]+=qty;
+    return null;
+  },
+
+  createTrade(seller,buyer,good,qty,unitPrice,origin){
+    if(seller===buyer) return 'Não é possível vender para a própria facção.';
+    if(World.relations[`${seller}:${buyer}`]!=='aliada') return 'Comércio direto exige uma facção aliada.';
+    if(!GOODS[good] || qty<=0 || unitPrice<=0) return 'Oferta inválida.';
+    const t=World.ix[origin];
+    if(!t || t.owner!==seller) return 'A origem precisa ser um território seu.';
+    if((t.stock[good]||0)<qty) return 'Estoque insuficiente na origem.';
+    const buyerFac=World.fac[buyer];
+    if(buyerFac.money<qty*unitPrice) return 'A facção compradora não possui caixa suficiente para essa compra.';
+    t.stock[good]-=qty;
+    const trade={id:World.uid++,seller,buyer,good,qty,unitPrice,origin,dest:buyerFac.home,
+      loaded:0,delivered:0,status:'accepted',vehicleId:null,createdH:World.h,completedH:null};
+    World.trades.push(trade);
+    return null;
+  },
+
+  loan(lender,borrower,amount,hours,rate=.15){
+    if(lender===borrower||amount<=0||hours<=0) return 'Empréstimo inválido.';
+    if(World.relation(lender,borrower)!=='aliada') return 'Empréstimos exigem aliança.';
+    if(World.fac[lender].money<amount) return 'Credor sem caixa.';
+    World.fac[lender].money-=amount; World.fac[borrower].money+=amount;
+    World.loans.push({id:World.uid++,lender,borrower,principal:amount,due:World.h+hours,total:amount*(1+rate),status:'active'});
+    World.fac[borrower].credit++; return null;
+  },
+  serviceLoans(dh){
+    for(const l of World.loans.filter(x=>x.status==='active'&&World.h>=x.due)){
+      const a=World.fac[l.lender],b=World.fac[l.borrower];
+      if(b.money>=l.total){b.money-=l.total;a.money+=l.total;l.status='paid';UI.log(`Crédito liquidado: ${a.short} recebeu ${money(l.total)}.`);}
+      else {b.reputation=Math.max(0,b.reputation-8);l.status='default';UI.log(`⚠️ ${b.short} não conseguiu honrar um crédito.`,'hit');}
+    }
+  },
+
+  cancelTrade(trade){
+    if(!trade||trade.status==='delivered'||trade.status==='cancelled') return;
+    const t=World.ix[trade.origin];
+    const v=trade.vehicleId?World.veh.find(x=>x.id===trade.vehicleId):null;
+    const inVehicle=v?Math.max(0,v.cargo[trade.good]||0):0;
+    const unshipped=Math.max(0,trade.qty-trade.delivered-inVehicle);
+    if(t && t.owner===trade.seller) t.stock[trade.good]+=unshipped+inVehicle;
+    if(v){ v.cargo[trade.good]=0; v.qty=Math.max(0,v.qty-inVehicle); v.tradeId=null; v.route=null; v.phase='idle'; v.note=''; }
+    trade.status='cancelled';
+  }
+};
+
+/* =============================== Influence ============================== */
+const Influence = {
+  tick(dh){
+    for(const t of World.terr){
+      const present={};
+      for(const u of World.units) if(u.loc===t.id&&u.state==='idle') present[u.f]=(present[u.f]||0)+UNITS[u.kind].inf;
+      const pontoMul=t.buildings.ponto?1.5:1;
+      for(let f=0;f<4;f++){
+        const p=present[f]||0;
+        if(p>0) t.inf[f]=Math.min(100, t.inf[f]+p*0.85*pontoMul*(t.owner===f?1:0.6)*dh);
+        else t.inf[f]=Math.max(0, t.inf[f]-(t.owner===f?0.34:0.9)*dh);
+        // infiltração: presença rival corrói o dono
+        if(f!==t.owner && p>0 && t.owner!==null) t.inf[t.owner]=Math.max(0,t.inf[t.owner]-p*0.5*dh);
+      }
+      if(t.owner!==null && t.inf[t.owner]<CONF.influenceLose){
+        const old=t.owner; t.owner=null;
+        UI.log(`<b>${t.name}</b> escapou do controle de ${World.fac[old].short}.`, old===0?'hit':null);
+      }
+      if(t.owner===null){
+        let best=-1,bv=0;
+        for(let f=0;f<4;f++) if(t.inf[f]>bv){bv=t.inf[f];best=f;}
+        if(best>=0 && bv>=CONF.influenceFlip){
+          t.owner=best;
+          UI.log(`<b>${World.fac[best].short}</b> assumiu o controle de <b>${t.name}</b>.`, best===0?'win':'hit');
+        }
+      }
+    }
+  }
+};
+
+/* ================================= Logi ================================= */
+/* Nada aparece no destino: veículo carrega no origem, gasta combustível
+   do estoque local ao partir, leva horas na estrada e descarrega no destino. */
+const Logi = {
+  assign(v,a,b,good,amount){
+    if(!v||v.f!==0 && World.fac[v.f].human===false) return 'Veículo inválido.';
+    const sea=VEHICLES[v.kind].sea;
+    if(!World.path(a,b,sea)||!World.path(b,a,sea)) return 'Não há rota possível para esse veículo.';
+    if(!GOODS[good]) return 'Mercadoria inválida.';
+    v.tradeId=null;
+    v.route={a,b,good,amount:amount||VEHICLES[v.kind].cap};
+    v.phase = v.loc===a?'load':'toA';
+    v.note='';
+    return null;
+  },
+
+  assignTrade(v,trade){
+    if(!v||v.f!==trade.seller) return 'Esse veículo não pertence ao vendedor.';
+    if(trade.status!=='accepted') return 'A venda não está pronta para transporte.';
+    const sea=VEHICLES[v.kind].sea;
+    if(!World.path(trade.origin,trade.dest,sea)) return 'Esse veículo não consegue alcançar o destino da entrega.';
+    if(v.route||v.path.length) return 'Veículo já está ocupado.';
+    v.tradeId=trade.id;
+    v.route={a:trade.origin,b:trade.dest,good:trade.good,amount:trade.qty};
+    v.phase=v.loc===trade.origin?'load':'toA';
+    v.note='carregamento comercial';
+    trade.status='transporting';
+    trade.vehicleId=v.id;
+    return null;
+  },
+
+  refuel(v,amount){
+    if(!v||v.loc===null) return 'O veículo precisa estar em um território para abastecer.';
+    const t=World.ix[v.loc];
+    if(t.owner!==v.f) return 'Só é possível abastecer em território controlado pela facção.';
+    const room=Math.max(0,VEHICLES[v.kind].fuelCap-v.fuel);
+    const give=Math.min(room, Math.max(0,amount||room), t.stock.fuel);
+    if(give<=0) return 'Não há combustível disponível ou o tanque já está cheio.';
+    t.stock.fuel-=give; v.fuel+=give; v.note='';
+    return null;
+  },
+
+  requiredFuel(v,a,b){
+    const p=World.path(a,b,VEHICLES[v.kind].sea);
+    if(!p) return Infinity;
+    return World.pathLen(p,a)*VEHICLES[v.kind].burn/10;
+  },
+
+  send(v,to){
+    const sea=VEHICLES[v.kind].sea;
+    const p=World.path(v.loc,to,sea);
+    if(!p||!p.length) return false;
+    const need=this.requiredFuel(v,v.loc,to);
+    if(v.fuel+0.001<need){
+      v.note='tanque insuficiente para a viagem';
+      return false;
+    }
+    v.path=p;
+    v.note='em trânsito';
+    return true;
+  },
+
+  hireDriver(fid){
+    const f=World.fac[fid]; if(f.money<420) return 'Caixa insuficiente para contratar motorista.';
+    f.money-=420; f.drivers=(f.drivers||0)+1; return null;
+  },
+  hireAdmin(fid){
+    const f=World.fac[fid]; if(f.money<520) return 'Caixa insuficiente para contratar administrador.';
+    f.money-=520; f.admins=(f.admins||0)+1; return null;
+  },
+  repair(v){
+    if(!v||v.loc===null) return 'O veículo precisa estar em um território.';
+    const t=World.ix[v.loc]; if(t.owner!==v.f) return 'A manutenção exige território controlado.';
+    if(v.route||v.path.length) return 'O veículo precisa estar parado.';
+    if((v.condition||100)>=99) return 'O veículo já está em boas condições.';
+    const cost=Math.round((100-v.condition)*14);
+    if(World.fac[v.f].money<cost) return `Manutenção custa ${money(cost)}.`;
+    World.fac[v.f].money-=cost; v.repairUntil=World.h+Math.max(3,(100-v.condition)*.10); v.note='em manutenção'; return null;
+  },
+
+  finishTrade(v){
+    const trade=World.trades.find(x=>x.id===v.tradeId);
+    if(!trade) return;
+    const buyer=World.fac[trade.buyer], seller=World.fac[trade.seller];
+    const B=World.ix[trade.dest];
+    const room=World.cap(B)-World.load(B);
+    const delivered=Math.min(v.qty,Math.max(0,room));
+    if(delivered<=0){
+      v.note='destino comercial lotado';
+      return;
+    }
+    B.stock[trade.good]+=delivered;
+    v.cargo[trade.good]-=delivered;
+    v.qty-=delivered;
+    trade.delivered+=delivered;
+    trade.status=trade.delivered+0.01>=trade.qty?'delivered':'accepted';
+    if(trade.delivered+0.01>=trade.qty){
+      seller.money+=trade.qty*trade.unitPrice;
+      trade.status='delivered';
+      trade.completedH=World.h;
+      v.tradeId=null; v.route=null; v.phase='idle'; v.note='';
+      UI.log(`Venda concluída: <b>${Math.round(trade.qty)} ${GOODS[trade.good].name}</b> entregues a <b>${buyer.short}</b>. +${money(trade.qty*trade.unitPrice)}.`);
+    } else if(v.qty<=0.01){
+      // Entrega parcial: o mesmo veículo volta à origem e completa o restante.
+      v.phase='toA'; v.note='retornando para completar venda';
+      this.send(v,trade.origin);
+    }
+  },
+
+  tick(dh){
+    for(const v of World.veh){
+      const V=VEHICLES[v.kind], fac=World.fac[v.f];
+      const idx=World.veh.filter(x=>x.f===v.f).indexOf(v);
+      if(idx>=(fac.drivers||0) && v.path.length===0){ v.note='sem motorista disponível'; continue; }
+      if(v.repairUntil && World.h<v.repairUntil){ v.note='em manutenção'; continue; }
+      if(v.repairUntil && World.h>=v.repairUntil){ v.repairUntil=0; v.condition=92; v.note=''; }
+
+      if(v.path.length){
+        const tgt=World.ix[v.path[0]];
+        const dx=tgt.center[0]-v.x, dy=tgt.center[1]-v.y, d=Math.hypot(dx,dy);
+        const step=V.speed*dh;
+        const burnPerPx=V.burn/10;
+        const fuelDistance=v.fuel/Math.max(0.00001,burnPerPx);
+        const travel=Math.min(step,d,fuelDistance);
+
+        if(travel<=0.0001){
+          v.fuel=0; v.note='sem combustível na estrada';
+          continue;
+        }
+
+        v.x+=dx/d*travel; v.y+=dy/d*travel;
+        v.fuel=Math.max(0,v.fuel-travel*burnPerPx);
+        v.condition=Math.max(0,(v.condition||100)-travel*(v.kind==='caminhao'?.0025:.0018));
+        if(v.condition<=5){ v.path=[]; v.route=null; v.phase='idle'; v.repairUntil=World.h+12; v.note='avariado — manutenção 12h'; UI.log(`${V.name} #${v.id} sofreu avaria e ficará 12h em manutenção.`,'hit'); continue; }
+
+        if(travel+0.001>=d){
+          v.x=tgt.center[0]+(Math.random()*20-10); v.y=tgt.center[1]+16;
+          v.loc=v.path.shift();
+          if(v.fuel<0.01) v.fuel=0;
+          v.note='';
+        } else if(travel+0.001<step && v.fuel<0.01){
+          v.fuel=0; v.note='sem combustível na estrada';
+        }
+        continue;
+      }
+
+      if(!v.route) continue;
+      const {a,b,good}=v.route;
+      const A=World.ix[a], B=World.ix[b];
+
+      if(v.phase==='toA'||v.phase==='toB'){
+        const dest=v.phase==='toA'?a:b;
+        if(v.loc!==dest){
+          if(!this.send(v,dest)) {
+            if(v.loc!==null && v.fuel<0.01) v.note='sem combustível';
+          }
+        } else {
+          v.phase=v.phase==='toA'?'load':'unload';
+        }
+        continue;
+      }
+
+      if(v.phase==='load'){
+        if(v.loc!==a){ v.phase='toA'; continue; }
+        if(A.owner!==v.f){
+          v.note='origem perdida';
+          if(v.tradeId){
+            const tr=World.trades.find(x=>x.id===v.tradeId);
+            if(tr) tr.status='cancelled';
+            v.tradeId=null;
+          }
+          v.route=null; continue;
+        }
+
+        let available=A.stock[good]||0;
+        let trade=null;
+        if(v.tradeId){
+          trade=World.trades.find(x=>x.id===v.tradeId);
+          available=trade?trade.qty-trade.loaded:0;
+        }
+        const take=Math.min(28*dh,V.cap-v.qty,available,v.route.amount-v.qty);
+
+        if(take>0){
+          if(trade){
+            trade.loaded+=take;
+          } else {
+            A.stock[good]-=take;
+          }
+          v.cargo[good]+=take; v.qty+=take; v.note='carregando';
+        }
+
+        const targetQty=Math.min(V.cap,v.route.amount);
+        if(v.qty>=targetQty-0.4 || (available<0.2 && v.qty>V.cap*0.25)){
+          v.phase='toB'; v.note='';
+        }
+        continue;
+      }
+
+      if(v.phase==='unload'||v.loc===b){
+        if(v.loc!==b){ v.phase='toB'; continue; }
+        v.phase='unload';
+
+        if(v.tradeId){
+          this.finishTrade(v);
+          if(v.tradeId) {
+            const room=World.cap(B)-World.load(B);
+            v.note=room<=0.5?'destino comercial lotado':'descarregando';
+          }
+          continue;
+        }
+
+        const room=World.cap(B)-World.load(B);
+        const give=Math.min(30*dh,v.cargo[good],Math.max(0,room));
+        B.stock[good]+=give; v.cargo[good]-=give; v.qty-=give;
+        v.note=room<=0.5?'destino lotado':'descarregando';
+
+        if(v.cargo[good]<=0.3){
+          v.qty=Math.max(0,v.qty); v.phase='load'; v.note='';
+          this.send(v,a);
+        }
+        continue;
+      }
+
+      if(v.phase==='load'||v.phase==='unload') continue;
+      v.phase=v.loc===a?'load':'toA';
+    }
+  }
+};
+
+/* ============================== Ops / Conflito ========================== */
+/* Nenhum ataque improvisado: reunir pessoal, munição, preparar por horas,
+   marchar e, depois, conviver com a desordem e a recuperação. */
+const Ops = {
+  PREP_HOURS: 14,
+  AMMO_PER: 9,
+  FUEL_PER: 3,
+  /** Só calcula requisitos e viabilidade — não gasta nada. Usado pela UI
+   *  para exibir a ordem antes do jogador confirmar. */
+  quote(fid, fromId, toId, count){
+    const from=World.ix[fromId], to=World.ix[toId];
+    const q={from:fromId,to:toId,count,ammo:count*this.AMMO_PER,fuel:count*this.FUEL_PER,
+      hops:null,ok:true,reason:null,
+      target:{owner:to.owner,name:to.name,defenders:World.units.filter(u=>u.loc===toId&&u.f!==fid&&u.kind==='seguranca').length,
+        unrest:Math.round(to.unrest),infra:to.infra,defBonus:World.defBonus(to)}};
+    if(!from||from.owner!==fid){ q.ok=false; q.reason='A concentração precisa partir de um território seu.'; return q; }
+    if(!from.neighbors.includes(toId)){ q.ok=false; q.reason='Só é possível operar sobre um território vizinho.'; return q; }
+    q.hops=1;
+    if(to.island && !World.veh.some(v=>v.f===fid&&VEHICLES[v.kind].sea)){ q.ok=false; q.reason='Alcançar a ilha exige uma lancha da facção.'; return q; }
+    const avail=World.at(fromId,fid,'seguranca').length;
+    q.availPersonnel=avail;
+    if(avail<count||count<1){ q.ok=false; q.reason='Pessoal insuficiente no território de partida.'; return q; }
+    if(from.stock.ammo<q.ammo){ q.ok=false; q.reason=`Faltam ${Math.ceil(q.ammo-from.stock.ammo)} de munição no estoque local.`; return q; }
+    if(from.stock.fuel<q.fuel){ q.ok=false; q.reason=`Faltam ${Math.ceil(q.fuel-from.stock.fuel)} de combustível no estoque local.`; return q; }
+    return q;
+  },
+  plan(fid, fromId, toId, count){
+    const q=this.quote(fid,fromId,toId,count);
+    if(!q.ok) return q.reason;
+    const from=World.ix[fromId], to=World.ix[toId];
+    const avail=World.at(fromId,fid,'seguranca');
+    from.stock.ammo-=q.ammo; from.stock.fuel-=q.fuel;
+    const op={id:World.uid++,f:fid,from:fromId,to:toId,prep:0,need:this.PREP_HOURS,units:[],ammo:q.ammo,fuel:q.fuel,
+      state:'prep',startH:World.h,targetSnapshot:q.target};
+    for(let i=0;i<count;i++){ const u=avail[i]; u.state='prep'; u.op=op.id; u.ammo=this.AMMO_PER; op.units.push(u.id); }
+    World.ops.push(op);
+    World.fac[fid].heat=Math.min(CONF.heatMax, World.fac[fid].heat+4);
+    return null;
+  },
+  cancel(op){
+    const from=World.ix[op.from];
+    for(const id of op.units){ const u=World.units.find(x=>x.id===id); if(u){u.state='idle';u.op=null;from.stock.ammo+=u.ammo;u.ammo=0;} }
+    if(from.owner===op.f){ from.stock.fuel+=op.fuel||0; }
+    World.ops.splice(World.ops.indexOf(op),1);
+  },
+  tick(dh){
+    for(let i=World.ops.length-1;i>=0;i--){
+      const op=World.ops[i];
+      const alive=op.units.map(id=>World.units.find(u=>u.id===id)).filter(Boolean);
+      if(!alive.length){ World.ops.splice(i,1); continue; }
+      if(op.state==='prep'){
+        op.prep+=dh;
+        if(op.prep>=op.need){
+          op.state='marcha';
+          for(const u of alive){ u.state='moving'; u.path=[op.to]; }
+          if(op.f===0) UI.log(`Operação sobre <b>${World.ix[op.to].name}</b> em marcha.`);
+          else if(World.ix[op.to].owner===0) UI.log(`<b>${World.fac[op.f].short}</b> avança sobre ${World.ix[op.to].name}.`,'hit');
+        }
+      }else if(op.state==='marcha'){
+        if(alive.every(u=>u.loc===op.to&&u.path.length===0)){
+          op.state='ativa'; for(const u of alive) u.state='idle';
+        }
+      }else{
+        if(!alive.some(u=>u.loc===op.to)) World.ops.splice(i,1);
+      }
+    }
+    // marcha a pé
+    for(const u of World.units){
+      if(u.state!=='moving'||!u.path.length) continue;
+      const t=World.ix[u.path[0]];
+      const dx=t.center[0]-u.x,dy=t.center[1]-u.y,d=Math.hypot(dx,dy),s=UNITS[u.kind].speed*dh;
+      if(d<=s){ u.x=t.center[0]+(Math.random()*26-13); u.y=t.center[1]+(Math.random()*20-10); u.loc=u.path.shift();
+        if(!u.path.length) u.state='idle'; }
+      else { u.x+=dx/d*s; u.y+=dy/d*s; u.loc=null; }
+    }
+    this.combat(dh);
+  },
+  combat(dh){
+    const byT={};
+    for(const u of World.units){ if(u.loc===null||u.state==='prep') continue; (byT[u.loc]=byT[u.loc]||[]).push(u); }
+    for(const tid in byT){
+      const t=World.ix[tid], here=byT[tid], sides={};
+      for(const u of here) (sides[u.f]=sides[u.f]||[]).push(u);
+      const ids=Object.keys(sides).map(Number).filter(f=>sides[f].some(u=>UNITS[u.kind].atk>4||f===-1));
+      const all=Object.keys(sides).map(Number);
+      if(all.length<2||ids.length<1) continue;
+      t.fighting=1.2; t.unrest=Math.min(100,t.unrest+22*dh);
+      for(const a of all){
+        const foes=all.filter(x=>x!==a); if(!foes.length) continue;
+        const target=foes[0], pool=sides[target];
+        let power=0;
+        for(const u of sides[a]){
+          let p=UNITS[u.kind].atk;
+          if(u.f>=0){
+            if(u.ammo>0){ u.ammo=Math.max(0,u.ammo-1.1*dh); }
+            else if(t.owner===u.f && t.stock.ammo>0){ t.stock.ammo=Math.max(0,t.stock.ammo-1.1*dh); }
+            else p*=0.3;
+          }
+          power+=p;
+        }
+        const def = (t.owner===target)?(1+World.defBonus(t)):1;
+        let dmg=power*dh*10/def;
+        while(dmg>0&&pool.length){
+          const v=pool[0], take=Math.min(dmg,v.hp); v.hp-=take; dmg-=take;
+          if(v.hp<=0){ pool.shift(); this.kill(v,t); }
+        }
+        if(a>=0) World.fac[a].heat=Math.min(CONF.heatMax, World.fac[a].heat+2.2*dh);
+      }
+      // consequência: quem ficou sozinho no território rival derruba a influência
+      const survivors=all.filter(f=>sides[f].length>0);
+      if(survivors.length===1 && survivors[0]>=0 && survivors[0]!==t.owner && t.owner!==null){
+        t.inf[t.owner]=Math.max(0,t.inf[t.owner]-14*dh);
+      }
+    }
+  },
+  kill(u,t){
+    const i=World.units.indexOf(u); if(i>=0) World.units.splice(i,1);
+    if(u.f===0) UI.log(`${UNITS[u.kind].name} perdido em ${t.name}.`,'hit');
+    if(u.f>=0) World.fac[u.f].heat=Math.min(CONF.heatMax,World.fac[u.f].heat+1.5);
+  }
+};
+
+/* ================================ Police ================================ */
+const Police = {
+  cd:0,
+  tick(dh){
+    this.cd-=dh;
+    for(const f of World.fac){
+      if(f.heat>=CONF.raidAt && this.cd<=0 && World.owned(f.id).length){
+        this.raid(f); this.cd=60; f.heat-=30;
+      }
+    }
+  },
+  raid(f){
+    const t=World.owned(f.id).sort((a,b)=>(b.stock.rubra*3+b.stock.ambar*2+b.stock.cinza)-(a.stock.rubra*3+a.stock.ambar*2+a.stock.cinza))[0];
+    if(!t) return;
+    let seized=0;
+    for(const g of SELLABLE){ seized+=t.stock[g]*0.55*GOODS[g].base; t.stock[g]*=0.45; }
+    t.stock.ammo*=0.6; t.unrest=Math.min(100,t.unrest+55);
+    t.inf[f.id]=Math.max(0,t.inf[f.id]-16);
+    for(const u of World.units.filter(u=>u.loc===t.id&&u.f===f.id).slice(0,2)) u.hp=Math.max(12,u.hp*0.5);
+    UI.log(`🚨 Operação policial em <b>${t.name}</b> contra ${f.short}. Apreensão de ~$${Math.round(seized).toLocaleString('pt-BR')}.`,'cop');
+    if(f.id===0) UI.banner(`Operação policial em ${t.name}`);
+  }
+};
+
+/* ============================== Cidade Viva ============================== */
+const City={
+  cd:48,
+  tick(dh){
+    this.cd-=dh;if(this.cd>0)return;
+    this.cd=42+Math.random()*30;
+    const es=[
+      ['Fim de semana forte','movimento turístico elevado',18,1.24,['mercado','bairro']],
+      ['Alta circulação','maior demanda nos bairros',20,1.15,['bairro']],
+      ['Mercado saturado','demanda temporariamente menor nos mercados',24,.82,['mercado']],
+      ['Fiscalização reforçada','pressão territorial maior',16,.88,['all']]
+    ];
+    const e=es[Math.floor(Math.random()*es.length)];
+    World.events.push({id:World.uid++,name:e[0],desc:e[1],until:World.h+e[2]});
+    for(const t of World.terr) if(e[4].includes('all')||e[4].includes(t.type)) t.eventMult=e[3];
+    UI.log(`📰 <b>${e[0]}</b>: ${e[1]} por ${e[2]}h.`);
+  },
+  cleanup(){
+    for(const e of World.events.filter(x=>World.h>=x.until)){
+      World.events.splice(World.events.indexOf(e),1);
+      for(const t of World.terr) t.eventMult=1;
+    }
+  }
+};
+
+/* ================================== AI ================================== */
+/* Administradoras, não exércitos: compram, estocam, escoam, constroem e só
+   operam militarmente quando há motivo e preparo. */
+const AI = {
+  next:{},
+  tick(dh){
+    for(const f of World.fac){
+      if(f.human||!World.owned(f.id).length) continue;
+      this.next[f.id]=(this.next[f.id]||Math.random()*4)-dh;
+      if(this.next[f.id]>0) continue;
+      this.next[f.id]=3+Math.random()*3;   // decide a cada ~3 h de jogo
+      this.autoEquip(f);
+      this.act(f);
+    }
+  },
+  autoEquip(f){
+    const pool=f.id===1?['ay47','carabina9','munA','radio']:f.id===2?['gloky','munA','munB','radio']:f.id===3?['carabina9','munB','kitLog','radio']:['ay47','gloky','radio','kitLog'];
+    const mine=World.units.filter(u=>u.f===f.id);
+    for(const u of mine){
+      const preferred=u.kind==='seguranca'?pool.filter(x=>EQUIPMENT[x].slot==='arma'||EQUIPMENT[x].slot==='proteção'):pool.filter(x=>EQUIPMENT[x].slot==='apoio');
+      for(const item of preferred){ if(!u.equipment.includes(item)){ World.equip(u,item); break; } }
+      const ammo=pool.find(x=>EQUIPMENT[x].slot==='munição'); if(ammo&&!u.equipment.some(x=>EQUIPMENT[x].slot==='munição')) World.equip(u,ammo);
+      u.maxhp=World.unitMaxHp(u); u.hp=Math.min(u.hp,u.maxhp);
+    }
+  },
+  act(f){
+    const mine=World.owned(f.id);
+    const home=mine.find(t=>t.buildings.ponto)||mine[0];
+    const ports=mine.filter(t=>t.type==='porto');
+    const prod=mine.filter(t=>t.type==='sitio'||t.type==='oficina');
+    const mkts=mine.filter(t=>(t.demand.cinza+t.demand.ambar+t.demand.rubra)>0.9).sort((a,b)=>b.pop-a.pop);
+    const myUnits=World.units.filter(u=>u.f===f.id);
+    const myVeh=World.veh.filter(v=>v.f===f.id);
+    const upk=World.upkeep(f.id);
+
+    // 1. suprimento: portos compram insumo/combustível/munição
+    for(const p of ports){
+      if(f.money>6000 && p.stock.insumo<160) Econ.buy(p,'insumo',60);
+      if(f.money>3000 && p.stock.fuel<200) Econ.buy(p,'fuel',120);
+      if(f.money>5000 && p.stock.ammo<120) Econ.buy(p,'ammo',40);
+      if(f.money>7000 && p.stock.armas<40) Econ.buy(p,'armas',20);
+    }
+
+    // 2. logística: abastece tanque, leva insumo e distribui carga até Pontos.
+    for(const v of myVeh){
+      if(v.route) continue;
+      if(v.loc!==null && v.fuel < VEHICLES[v.kind].fuelCap*0.35){
+        Logi.refuel(v,VEHICLES[v.kind].fuelCap-v.fuel);
+      }
+      const sea=VEHICLES[v.kind].sea;
+      let best=null;
+      const needIns=prod.filter(t=>t.type==='oficina'&&t.stock.insumo<70);
+      if(ports.length&&needIns.length) best={a:ports[0].id,b:needIns[0].id,g:'insumo'};
+      else{
+        const full=prod.map(t=>({t,g:SELLABLE.filter(g=>t.stock[g]>25).sort((x,y)=>t.stock[y]-t.stock[x])[0]}))
+                       .filter(o=>o.g).sort((x,y)=>y.t.stock[y.g]-x.t.stock[x.g])[0];
+        const m=mkts.filter(t=>t.buildings.ponto&&Object.values(t.pointStock).some(x=>x<60))[0]||mkts[0];
+        if(full&&m) best={a:full.t.id,b:m.id,g:full.g};
+      }
+      if(best && World.path(best.a,best.b,sea)) Logi.assign(v,best.a,best.b,best.g);
+    }
+
+    // 2b. abastece automaticamente Pontos/Bocas quando a carga chega ao território.
+    for(const t of mine){
+      if(!t.buildings.ponto) continue;
+      for(const g of SELLABLE){
+        const room=Math.max(0,80-t.pointStock[g]);
+        if(room>0.5 && t.stock[g]>1) Econ.distribute(t,g,Math.min(room,t.stock[g]));
+      }
+    }
+
+    // 2c. compra/venda entre facções aliadas: apenas cria comércio quando há caixa e estoque.
+    const allies=World.fac.filter(x=>x.id!==f.id&&World.relation(f.id,x.id)==='aliada');
+    for(const ally of allies){
+      const origin=mine.find(t=>(t.stock.armas>15||t.stock.ammo>40||t.stock.fuel>80||t.stock.insumo>80));
+      if(origin && f.money>upk*100+5000 && ally.money>3000){
+        const good=origin.stock.armas>15?'armas':origin.stock.ammo>40?'ammo':origin.stock.fuel>80?'fuel':'insumo';
+        const qty=Math.min(good==='armas'?20:good==='ammo'?40:60,origin.stock[good]);
+        if(qty>0 && !World.trades.some(tr=>tr.seller===f.id&&tr.buyer===ally.id&&tr.status!=='delivered'&&tr.status!=='cancelled')){
+          const before=World.trades.length;
+          const err=Econ.createTrade(f.id,ally.id,good,qty,GOODS[good].buy*1.25,origin.id);
+          if(!err && World.trades.length>before){
+            const tr=World.trades[World.trades.length-1];
+            const v=myVeh.find(x=>x.loc===origin.id&&!x.route);
+            if(v) Logi.assignTrade(v,tr);
+          }
+        }
+      }
+    }
+
+    // 3. infraestrutura, só com folga de caixa contra o custeio
+    if(f.money > upk*90 + 4000){
+      const cand = mine.filter(t=>!t.works.length);
+      const noDep = cand.filter(t=>!t.buildings.deposito && (t.type==='oficina'||t.type==='sitio'))[0];
+      const noPonto = cand.filter(t=>!t.buildings.ponto && t.demand.cinza>0.8)[0];
+      const noGar = mine.some(t=>t.buildings.garagem)?null:cand[0];
+      const pick = noDep||noPonto||noGar;
+      if(pick){ f.money-=BUILD[noDep?'deposito':noPonto?'ponto':'garagem'].cost;
+        const k=noDep?'deposito':noPonto?'ponto':'garagem';
+        pick.works.push({type:'build',k,p:0,need:BUILD[k].hours}); }
+    }
+
+    // 4. pessoal: operadores para segurar influência; seguranças com parcimônia
+    const ops=myUnits.filter(u=>u.kind==='operador').length;
+    const seg=myUnits.filter(u=>u.kind==='seguranca').length;
+    if(ops < mine.length+1 && f.money>upk*40+UNITS.operador.cost && home)
+      { f.money-=UNITS.operador.cost; home.works.push({type:'unit',k:'operador',p:0,need:UNITS.operador.hours}); }
+    else if(seg<4 && f.money>upk*70+UNITS.seguranca.cost && home)
+      { f.money-=UNITS.seguranca.cost; home.works.push({type:'unit',k:'seguranca',p:0,need:UNITS.seguranca.hours}); }
+    else if(myVeh.length<3 && f.money>upk*80+VEHICLES.caminhao.cost && mine.some(t=>t.buildings.garagem)){
+      const g=mine.find(t=>t.buildings.garagem);
+      f.money-=VEHICLES.caminhao.cost; g.works.push({type:'veh',k:'caminhao',p:0,need:VEHICLES.caminhao.hours});
+    }
+
+    // 5. expansão pacífica: mandar operador ocupar vizinho sem dono
+    const idleOps=myUnits.filter(u=>u.kind==='operador'&&u.state==='idle');
+    const freeN=[];
+    for(const t of mine) for(const n of t.neighbors){
+      const x=World.ix[n];
+      if(x.owner===null && !World.units.some(u=>u.loc===n&&u.f===f.id)) freeN.push(x);
+    }
+    if(freeN.length&&idleOps.length>mine.length*0.5){
+      const tgt=freeN.sort((a,b)=>(b.val*2+b.pop/4000)-(a.val*2+a.pop/4000))[0];
+      const u=idleOps[0]; u.state='moving'; u.path=[tgt.id];
+    }
+
+    // 6. operação militar: só com caixa sólido, munição posicionada, alvo fraco
+    //    e um bom intervalo desde a última. Pode passar dias sem nenhuma.
+    if(World.h - f.lastOp < 90) return;
+    if(f.money < upk*140 + 8000 || f.heat>45) return;
+    const ready=mine.filter(t=>t.stock.ammo>=45 && World.at(t.id,f.id,'seguranca').length>=3);
+    if(!ready.length) return;
+    let best=null;
+    for(const t of ready) for(const n of t.neighbors){
+      const x=World.ix[n];
+      if(x.owner===f.id||x.island) continue;
+      const def=World.units.filter(u=>u.loc===n&&u.f!==f.id&&u.kind==='seguranca').length*(1+World.defBonus(x));
+      const gain=x.val*2.4 + x.pop/5000 + (x.type==='porto'?2:0) + (x.type==='mercado'?1.6:0);
+      const mine2=World.at(t.id,f.id,'seguranca').length;
+      if(mine2 >= def*1.9+1 && gain>2.2) { const s=gain-def;
+        if(!best||s>best.s) best={from:t.id,to:n,n:Math.min(mine2,5),s}; }
+    }
+    if(best){
+      const err=Ops.plan(f.id,best.from,best.to,best.n);
+      if(!err){ f.lastOp=World.h;
+        UI.log(`<b>${f.short}</b> concentra pessoal em ${World.ix[best.from].name}.`, World.ix[best.to].owner===0?'hit':null);
+        if(World.ix[best.to].owner===0) UI.banner(`${f.short} se prepara contra ${World.ix[best.to].name}`);
+      }
+    }
+  }
+};
+
+/* =============================== Alerts ================================= */
+/* Só leitura sobre World: nenhuma mecânica nova, apenas prioriza o que já
+   existe e pede decisão do jogador. sev: 2=crítico, 1=atenção, 0=informativo. */
+const Alerts = {
+  list(fid){
+    const out=[], f=World.fac[fid], mine=World.owned(fid);
+
+    if(f.money < World.upkeep(fid)*20) out.push({sev:2,tid:null,txt:`Caixa próxima do colapso: cobre menos de 20 h de custeio (${Math.round(f.money)}).`});
+    else if(f.money < World.upkeep(fid)*60) out.push({sev:1,tid:null,txt:`Caixa apertada: reserva cobre menos de 60 h de custeio.`});
+
+    if(f.heat>=CONF.raidAt-12 && f.heat<CONF.raidAt) out.push({sev:1,tid:null,txt:`Pressão policial em ${Math.round(f.heat)}% — perto do limiar de operação.`});
+    if(f.heat>=CONF.raidAt) out.push({sev:2,tid:null,txt:`Pressão policial crítica (${Math.round(f.heat)}%) — operação pode ocorrer a qualquer hora.`});
+
+    for(const v of World.veh){
+      if(v.f!==fid) continue;
+      if(v.note==='sem combustível'||v.note==='sem combustível na estrada') out.push({sev:2,tid:v.loc,txt:`${VEHICLES[v.kind].name} #${v.id} está sem combustível${v.loc?` em ${World.ix[v.loc].name}`:' na estrada'}.`});
+      else if(v.note==='tanque insuficiente para a viagem') out.push({sev:1,tid:v.loc,txt:`${VEHICLES[v.kind].name} #${v.id} não tem combustível suficiente para a próxima viagem.`});
+      else if(v.note==='destino lotado'||v.note==='destino comercial lotado') out.push({sev:1,tid:v.route?v.route.b:null,txt:`${VEHICLES[v.kind].name} #${v.id} não consegue descarregar: destino sem espaço.`});
+      else if(v.note==='origem perdida') out.push({sev:1,tid:null,txt:`${VEHICLES[v.kind].name} #${v.id} perdeu a origem da rota — reatribua manualmente.`});
+    }
+
+    for(const t of mine){
+      if((t.inf[fid]||0) < 40) out.push({sev: t.inf[fid]<28?2:1, tid:t.id, txt:`${t.name} perdendo influência: ${Math.round(t.inf[fid])}% (controle exige presença de operadores).`});
+      if(World.load(t) >= World.cap(t)*0.94) out.push({sev:1,tid:t.id, txt:`Estoque de ${t.name} praticamente cheio — produção pode ser desperdiçada.`});
+      const dem=SELLABLE.reduce((s,g)=>s+(t.demand[g]||0),0);
+      if(dem<0.15 && (t.type==='sitio'||t.type==='oficina') && World.load(t)>10 && !mine.some(o=>o.id!==t.id&&SELLABLE.reduce((s,g)=>s+(o.demand[g]||0),0)>0.5))
+        out.push({sev:0,tid:t.id, txt:`${t.name} produz sem mercado próximo com demanda relevante — considere uma rota mais longa.`});
+      if(t.unrest>45) out.push({sev:1,tid:t.id, txt:`Desordem alta em ${t.name} (${Math.round(t.unrest)}%) — produção e escoamento reduzidos.`});
+      if(t.works.length){ const w=t.works[0]; out.push({sev:0,tid:t.id, txt:`Obra em ${t.name}: ${Math.ceil(w.need-w.p)} h restantes.`}); }
+    }
+
+    for(const v of World.veh.filter(x=>x.f===fid)){
+      if((v.condition||100)<25) out.push({sev:2,tid:v.loc,txt:`${VEHICLES[v.kind].name} #${v.id} está com ${Math.round(v.condition)}% de condição.`});
+      if(v.note==='sem motorista disponível') out.push({sev:1,tid:v.loc,txt:`${VEHICLES[v.kind].name} #${v.id} está sem motorista.`});
+    }
+    for(const t of mine){
+      if((t.heat||0)>70) out.push({sev:2,tid:t.id,txt:`Pressão local alta em ${t.name}: ${Math.round(t.heat)}%.`});
+      if(t.buildings.ponto){
+        const pLoad=SELLABLE.reduce((s,g)=>s+t.pointStock[g],0);
+        if(pLoad<0.5 && World.load(t)>20) out.push({sev:1,tid:t.id,txt:`Boca de ${t.name} está vazia enquanto há carga no estoque do território.`});
+        if(pLoad>=79) out.push({sev:0,tid:t.id,txt:`Boca de ${t.name} está cheia — distribuição adicional aguarda espaço.`});
+      }
+    }
+    for(const tr of World.trades){
+      if(tr.seller===fid && tr.status==='accepted' && !tr.vehicleId)
+        out.push({sev:1,tid:tr.origin,txt:`Venda para ${World.fac[tr.buyer].short} aguardando transporte.`});
+      if(tr.seller===fid && tr.status==='transporting')
+        out.push({sev:0,tid:tr.dest,txt:`Entrega comercial em trânsito para ${World.fac[tr.buyer].short}.`});
+    }
+
+    for(const op of World.ops){
+      if(op.f===fid) out.push({sev:0,tid:op.to, txt:`Operação em preparo sobre ${World.ix[op.to].name}: faltam ${Math.ceil(op.need-op.prep)} h.`});
+      else if(World.ix[op.to].owner===fid) out.push({sev:2,tid:op.to, txt:`${World.fac[op.f].short} concentra forças contra ${World.ix[op.to].name} — ${op.state==='prep'?`preparo em curso`:'em marcha'}.`});
+    }
+    out.sort((a,b)=>b.sev-a.sev);
+    return out;
+  }
+};
+
+/* ================================ Rules ================================= */
+const Rules = {
+  tick(dh){
+    if(World.over) return;
+    const need=Math.ceil(World.terr.length*CONF.victoryShare);
+    for(const f of World.fac){
+      const n=World.owned(f.id).length;
+      if(n>=need){ f.hold+=dh; if(f.hold>=CONF.holdHours) return UI.end(f.id===0,f); }
+      else f.hold=Math.max(0,f.hold-dh*0.5);
+      if(n===0&&f.alive){ f.alive=false; UI.log(`<b>${f.short}</b> deixou de existir como organização.`, f.id===0?'hit':'win'); }
+    }
+    if(World.owned(0).length===0 && !World.units.some(u=>u.f===0)) UI.end(false,null);
+  },
+  collapse(){}
+};
+Econ.collapse=function(f){
+  if(!f.alive) return;
+  const t=World.owned(f.id).sort((a,b)=>a.val-b.val)[0];
+  if(t){ t.owner=null; t.inf[f.id]=0; f.money+=2500;
+    UI.log(`${f.short} não sustentou o custeio e abandonou <b>${t.name}</b>.`, f.id===0?'hit':null); }
+};
+
+/* =============================== Render ================================= */
+const Render=(()=>{
+  const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+  const W=1230,H=760,view={s:1,ox:0,oy:0};
+  function fit(){
+    const r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+    cv.width=r.width*dpr;cv.height=r.height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+    view.s=Math.min(r.width/W,r.height/H);view.ox=(r.width-W*view.s)/2;view.oy=(r.height-H*view.s)/2;
+  }
+  const toWorld=(px,py)=>{const r=cv.getBoundingClientRect();return [(px-r.left-view.ox)/view.s,(py-r.top-view.oy)/view.s];};
+  const path=p=>{ctx.beginPath();ctx.moveTo(p[0][0],p[0][1]);for(let i=1;i<p.length;i++)ctx.lineTo(p[i][0],p[i][1]);ctx.closePath();};
+  function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+  function draw(){
+    const r=cv.getBoundingClientRect();
+    ctx.clearRect(0,0,r.width,r.height);
+    ctx.save();ctx.translate(view.ox,view.oy);ctx.scale(view.s,view.s);ctx.textAlign='center';
+    ctx.fillStyle='rgba(180,225,235,.10)';ctx.font='600 26px Archivo,sans-serif';
+    ctx.fillText('OCEANO ATLÂNTICO',730,726);ctx.font='600 17px Archivo,sans-serif';
+    ctx.fillText('ENSEADA DE MANGUINHOS',165,112);
+
+    // rotas ativas do jogador
+    ctx.setLineDash([5,7]);ctx.lineWidth=2;
+    for(const v of World.veh){ if(v.f!==0||!v.route) continue;
+      const a=World.ix[v.route.a].center,b=World.ix[v.route.b].center;
+      ctx.strokeStyle='rgba(232,184,75,.30)';ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke(); }
+    ctx.setLineDash([]);
+
+    const sel=World.selected?World.ix[World.selected]:null;
+    for(const t of World.terr){
+      const f=t.owner!=null?World.fac[t.owner]:null;
+      ctx.save();ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=12;ctx.shadowOffsetY=4;
+      path(t.poly);ctx.fillStyle=f?f.color:TYPES[t.type].color;ctx.globalAlpha=f?.84:.55;ctx.fill();ctx.restore();ctx.globalAlpha=1;
+      if(t.unrest>8){ path(t.poly);ctx.fillStyle=`rgba(226,102,75,${Math.min(.4,t.unrest/240)})`;ctx.fill(); }
+      path(t.poly);ctx.fillStyle='rgba(255,246,220,.05)';ctx.fill();
+      path(t.poly);
+      if(sel&&sel.id===t.id){ctx.lineWidth=4;ctx.strokeStyle='#fff6e2';}
+      else if(t.fighting>0){ctx.lineWidth=3.4;ctx.strokeStyle='#ff7d5c';}
+      else{ctx.lineWidth=1.5;ctx.strokeStyle='rgba(6,28,34,.75)';}
+      ctx.stroke();
+
+      const [cx,cy]=t.center;
+      ctx.fillStyle='rgba(10,28,28,.92)';ctx.font='700 12.5px Archivo,sans-serif';
+      ctx.fillText(t.name,cx,cy-22);
+      ctx.fillStyle='rgba(10,28,28,.6)';ctx.font='600 10.5px Archivo,sans-serif';
+      ctx.fillText(`${TYPES[t.type].name} · ${(t.pop/1000).toFixed(1)} mil · inf ${t.infra}`,cx,cy-11);
+
+      // barra de influência do dono
+      if(t.owner!=null){
+        const w=56,p=Math.min(1,(t.inf[t.owner]||0)/100);
+        ctx.fillStyle='rgba(8,24,26,.4)';rr(cx-w/2,cy-5,w,4,2);ctx.fill();
+        ctx.fillStyle='rgba(255,250,235,.85)';rr(cx-w/2,cy-5,w*p,4,2);ctx.fill();
+      }
+      // estoque por mercadoria (barras finas)
+      const load=World.load(t),capv=World.cap(t);
+      const w=56;let x0=cx-w/2;
+      ctx.fillStyle='rgba(8,24,26,.4)';rr(cx-w/2,cy+2,w,6,3);ctx.fill();
+      for(const g of GK){ const frac=t.stock[g]/capv; if(frac<=0.001) continue;
+        ctx.fillStyle=GOODS[g].color; ctx.fillRect(x0,cy+2,Math.max(1,w*frac),6); x0+=w*frac; }
+      if(load>capv*0.97){ ctx.fillStyle='#e2664b';ctx.font='700 10px Archivo,sans-serif';ctx.fillText('lotado',cx,cy+19); }
+      if(t.buildings.ponto){
+        const pl=SELLABLE.reduce((s,g)=>s+t.pointStock[g],0);
+        ctx.fillStyle='rgba(10,28,28,.72)';ctx.font='600 9.5px Archivo,sans-serif';
+        ctx.fillText(`boca ${Math.round(pl)}/80`,cx,cy+42);
+      }
+
+      let bs='';for(const b in t.buildings) if(t.buildings[b]) bs+=BUILD[b].icon;
+      if(t.works.length) bs+='⌛';
+      if(bs){ctx.font='700 13px Archivo,sans-serif';ctx.fillStyle='rgba(16,38,38,.85)';ctx.fillText(bs,cx,cy+30);}
+    }
+
+    for(const u of World.units){
+      if(u.state==='prep'||u.loc===null&&!u.path.length) {}
+      const col=World.fac[u.f].color;
+      ctx.save();ctx.translate(u.x,u.y);
+      ctx.fillStyle='rgba(4,14,18,.5)';ctx.beginPath();ctx.arc(0,3,7,0,7);ctx.fill();
+      ctx.fillStyle=col;ctx.strokeStyle='rgba(6,20,24,.9)';ctx.lineWidth=1.3;
+      if(u.kind==='operador'){ctx.beginPath();ctx.arc(0,0,4.6,0,7);}
+      else rr(-4.5,-5.5,9,11,2);
+      ctx.fill();ctx.stroke();
+      if(u.state==='prep'){ctx.strokeStyle='#fff6e2';ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(0,0,9,0,7);ctx.stroke();}
+      if(u.hp<u.maxhp){ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(-7,-10,14,2.6);
+        ctx.fillStyle='#74cf9a';ctx.fillRect(-7,-10,14*(u.hp/u.maxhp),2.6);}
+      ctx.restore();
+    }
+    for(const v of World.veh){
+      ctx.save();ctx.translate(v.x,v.y);
+      ctx.fillStyle='rgba(4,14,18,.5)';ctx.beginPath();ctx.arc(0,3,8,0,7);ctx.fill();
+      ctx.fillStyle=World.fac[v.f].color;ctx.strokeStyle='rgba(6,20,24,.9)';ctx.lineWidth=1.3;
+      if(v.kind==='lancha'){ctx.beginPath();ctx.moveTo(0,-6);ctx.lineTo(6,0);ctx.lineTo(0,6);ctx.lineTo(-6,0);ctx.closePath();}
+      else rr(-8,-4,16,8,2);
+      ctx.fill();ctx.stroke();
+      if(v.qty>0.5){ const g=Object.keys(v.cargo).find(k=>v.cargo[k]>0.5);
+        ctx.fillStyle=g?GOODS[g].color:'#fff';ctx.font='700 9px Archivo,sans-serif';ctx.textAlign='center';
+        ctx.fillText(Math.round(v.qty),0,-8); }
+      if(v.fuel<VEHICLES[v.kind].fuelCap*0.15){
+        ctx.strokeStyle='#e2664b';ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(0,0,10,0,7);ctx.stroke();
+      }
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+  return {fit,draw,toWorld,cv};
+})();
+
+/* ================================== UI ================================== */
+const UI=(()=>{
+  const $=id=>document.getElementById(id);
+  let tab='terr', opCount=1, routeWiz=null, bannerT=0, opDraft=null;
+  const contractUI={open:false,sync(){const allies=World.fac.filter(o=>o.id!==0&&World.relation(0,o.id)==='aliada');const origins=World.owned(0).filter(t=>GK.some(g=>(t.stock[g]||0)>0));const b=$('modalBuyer'),g=$('modalGood'),o=$('modalOrigin');if(!b||!g||!o)return;const vb=b.value,vg=g.value,vo=o.value;b.innerHTML=allies.map(x=>`<option value="${x.id}">${x.short}</option>`).join('');g.innerHTML=['armas','ammo','fuel','insumo','cinza','ambar','rubra'].map(x=>`<option value="${x}">${GOODS[x].name}</option>`).join('');o.innerHTML=origins.map(x=>`<option value="${x.id}">${x.name}</option>`).join('');if([...b.options].some(x=>x.value===vb))b.value=vb;if([...g.options].some(x=>x.value===vg))g.value=vg;if([...o.options].some(x=>x.value===vo))o.value=vo;$('modalContractHint').textContent=allies.length?`${origins.length} origem(ns) com estoque disponível. A proposta não retira a carga do estoque.`:'Nenhuma facção aliada disponível.'},show(){this.sync();this.open=true;const m=$('contractModal');m.classList.add('open');m.setAttribute('aria-hidden','false');setTimeout(()=>$('modalQty')?.focus(),0)},hide(){this.open=false;const m=$('contractModal');m.classList.remove('open');m.setAttribute('aria-hidden','true')}};
+
+
+  function log(html,cls){
+    const d=document.createElement('div');
+    const day=Math.floor(World.h/24)+1;
+    d.innerHTML=`<span style="opacity:.55">D${day} </span>`+(cls?`<span class="${cls}">${html}</span>`:html);
+    $('log').prepend(d); while($('log').children.length>60)$('log').lastChild.remove();
+  }
+  function banner(txt){ const b=$('banner'); b.textContent=txt; b.style.display='block'; bannerT=World.h+8; }
+  const n0=v=>Math.round(v).toLocaleString('pt-BR');
+  const money=v=>'$'+n0(v);
+
+  function hud(){
+    const f=World.fac[0];
+    if(bannerT&&World.h>bannerT){ $('banner').style.display='none'; bannerT=0; }
+    const day=Math.floor(World.h/24)+1, hh=Math.floor(World.h%24), mm=Math.floor((World.h%1)*60);
+    $('clock').textContent=`Dia ${day} · ${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+    $('rMoney').textContent=money(f.money);
+    $('rNet').textContent=`−${n0(World.upkeep(0))}/h de custeio`;
+    $('rTerr').textContent=`${World.owned(0).length}/${World.terr.length}`;
+    $('rUnits').textContent=World.units.filter(u=>u.f===0).length+'+'+World.veh.filter(v=>v.f===0).length;
+    $('heatFill').style.width=(f.heat/CONF.heatMax*100)+'%';
+    $('heatTxt').textContent=Math.round(f.heat)+'%';
+  }
+
+  /* ---------- aba Território ---------- */
+  function terrPanel(){
+    const f=World.fac[0], t=World.selected?World.ix[World.selected]:null, p=$('panel');
+    if(!t){
+      $('selName').textContent='Península';
+      $('selSub').textContent='Selecione um território no mapa.';
+      p.innerHTML=`<div class="hint"><p><b>O ciclo</b></p>
+        <p>Portos compram <b>insumo</b>, <b>combustível</b> e <b>munição</b> do mercado externo.
+        Oficinas transformam insumo em carga. Sítios produzem Carga Cinza.
+        Mercados escoam o que estiver <i>fisicamente</i> em estoque ali — nada aparece no destino sozinho.</p>
+        <p>Veículos levam horas na estrada e queimam combustível do estoque de origem.
+        Influência vem de operadores presentes; território sem presença escapa do seu controle.</p>
+        <p>Operações militares exigem munição posicionada e 14 h de preparação. Elas custam caro e deixam desordem por dias.</p></div>`;
+      return;
+    }
+    const own=t.owner==null?'Sem controle definido':World.fac[t.owner].name;
+    const col=t.owner==null?TYPES[t.type].color:World.fac[t.owner].color;
+    $('selName').innerHTML=`<span class="tag" style="background:${col}"></span>${t.name}`;
+    $('selSub').textContent=`${TYPES[t.type].name} · ${own}${t.island?' · ilha':''}`;
+
+    let h='';
+    h+=`<div class="block"><h3>Perfil</h3>
+      <div class="complexBadge">▦ ${t.complex?.name||'Complexo local'}</div><div class="uiHelp">Função: ${t.complex?.role||TYPES[t.type].name} · ${t.complex?.bonus||''}</div>
+      <div class="row"><span>População</span><b>${n0(t.pop)}</b></div>
+      <div class="row"><span>Infraestrutura</span><b>nível ${t.infra}</b></div>
+      <div class="row"><span>Valor estratégico</span><b>${'★'.repeat(t.val)}</b></div>
+      <div class="row"><span>Desordem</span><b class="${t.unrest>25?'warn':''}">${Math.round(t.unrest)}%</b></div>
+      <div class="row"><span>Custeio estimado</span><b>${money(t.pop/1000*1.9+t.infra*2.2)}/h</b></div>`;
+    for(let i=0;i<4;i++) if(t.inf[i]>1)
+      h+=`<div class="row"><span><span class="tag" style="background:${World.fac[i].color}"></span>Influência ${World.fac[i].short}</span><b>${Math.round(t.inf[i])}%</b></div>`;
+    h+=`<div class="hint" style="margin-top:6px">${TYPES[t.type].desc}</div></div>`;
+
+    h+=`<div class="block"><h3>Estoque ${Math.round(World.load(t))}/${World.cap(t)}</h3>`;
+    for(const g of GK) h+=`<div class="row"><span><span class="tag" style="background:${GOODS[g].color}"></span>${GOODS[g].name}</span><b>${t.stock[g].toFixed(1)}</b></div>`;
+    h+=`<div class="bar"><i style="width:${Math.min(100,World.load(t)/World.cap(t)*100)}%;background:${World.load(t)>World.cap(t)*.9?'var(--red)':'var(--green)'}"></i></div></div>`;
+    if(t.buildings.ponto){
+      const pl=SELLABLE.reduce((s,g)=>s+t.pointStock[g],0);
+      h+=`<div class="block"><h3>◉ Boca de distribuição · ${pl.toFixed(0)}/${t.pointCap||80}</h3>`;
+      for(const g of SELLABLE){
+        const pr=GOODS[g].base*t.price[g]*(0.8+t.val*0.14);
+        h+=`<div class="row"><span>${GOODS[g].name}</span><b>${t.pointStock[g].toFixed(1)} · ${t.demand[g].toFixed(2)}/h · ${money(pr)}</b></div>`;
+        if(t.owner===0) h+=`<div class="btnrow" style="margin:2px 0 6px">
+          <button type="button" data-dist="${g}" data-dq="20" ${t.stock[g]<=0||t.pointStock[g]>=80?'disabled':''}>Distribuir 20</button>
+          <button type="button" data-dist="${g}" data-dq="80" ${t.stock[g]<=0||t.pointStock[g]>=80?'disabled':''}>Encher</button>
+        </div>`;
+      }
+      h+=`<div class="row"><span>Pressão local</span><b>${Math.round(t.heat||0)}%</b></div><div class="hint">A carga no estoque do território não gera receita. Só a carga dentro da Boca é vendida conforme a demanda local.</div></div>`;
+    }
+
+    if(t.type==='porto'&&t.owner===0){
+      h+=`<div class="block"><h3>Compra no mercado externo</h3>`;
+      for(const g of ['insumo','fuel','ammo','armas'])
+        h+=`<div class="item"><div><div class="nm">${GOODS[g].name}</div><div class="ct">${money(GOODS[g].buy)} por unidade</div></div>
+          <div class="btnrow"><button type="button" data-buy="${g}" data-q="25" ${f.money<GOODS[g].buy*25?'disabled':''}>25</button>
+          <button type="button" data-buy="${g}" data-q="100" ${f.money<GOODS[g].buy*100?'disabled':''}>100</button></div></div>`;
+      h+=`</div>`;
+    }
+    const totDem=SELLABLE.reduce((s,g)=>s+(t.demand[g]||0),0);
+    if(totDem>0.2){
+      h+=`<div class="block"><h3>Demanda local</h3>`;
+      for(const g of SELLABLE){ if(!t.demand[g]) continue;
+        const pr=GOODS[g].base*t.price[g]*(0.8+t.val*0.14);
+        h+=`<div class="row"><span><span class="tag" style="background:${GOODS[g].color}"></span>${GOODS[g].name}</span>
+          <b>${t.demand[g].toFixed(2)}/h · ${money(pr)}${t.price[g]<0.85?' <span class="warn">saturado</span>':''}</b></div>`; }
+      h+=`</div>`;
+    }
+
+    if(t.owner===0){
+      if(t.works.length){
+        h+=`<div class="block"><h3>Fila de obras (sequencial)</h3>`;
+        t.works.forEach((w,i)=>{
+          const nm=w.type==='build'?BUILD[w.k].name:w.type==='unit'?UNITS[w.k].name:w.type==='veh'?VEHICLES[w.k].name:'Infraestrutura';
+          h+=`<div class="row"><span>${nm}${i>0?' <small style="color:var(--muted)">(na fila)</small>':''}</span>
+            <b>${i===0?Math.ceil(w.need-w.p)+' h':'aguarda a anterior'}</b></div>`;
+        });
+        h+=`</div>`;
+      }
+      h+=`<div class="block"><h3>Construir</h3>`;
+      for(const b in BUILD){ const B=BUILD[b],done=t.buildings[b];
+        h+=`<div class="item"><div><div class="nm">${B.icon} ${B.name}${done?' ✓':''}</div>
+          <div class="ct">${money(B.cost)} · ${B.hours} h · custeio ${money(B.upkeep)}/h<br>${B.desc}</div></div>
+          <button type="button" data-bld="${b}" ${done||f.money<B.cost?'disabled':''}>Iniciar</button></div>`; }
+      if(t.infra<5) h+=`<div class="item"><div><div class="nm">Ampliar infraestrutura</div>
+        <div class="ct">${money(2200*t.infra)} · ${16*t.infra} h · +capacidade, +produção, +custeio</div></div>
+        <button type="button" data-infra="1" ${f.money<2200*t.infra?'disabled':''}>Ampliar</button></div>`;
+      h+=`</div>`;
+
+      const canUnit=t.buildings.ponto||t.buildings.refugio;
+      h+=`<div class="block"><h3>Pessoal ${canUnit?'':'(exige Ponto ou Refúgio)'}</h3>`;
+      for(const k in UNITS){ const U=UNITS[k];
+        h+=`<div class="item"><div><div class="nm">${U.icon} ${U.name}</div>
+          <div class="ct">${money(U.cost)} · ${U.hours} h · custeio ${money(U.upkeep)}/h</div></div>
+          <button type="button" data-unit="${k}" ${!canUnit||f.money<U.cost?'disabled':''}>Recrutar</button></div>`; }
+      h+=`</div>`;
+      if(t.buildings.garagem){
+        h+=`<div class="block"><h3>Garagem</h3>`;
+        for(const k in VEHICLES){ const V=VEHICLES[k];
+          h+=`<div class="item"><div><div class="nm">${V.icon} ${V.name}</div>
+            <div class="ct">${money(V.cost)} · ${V.hours} h · carga ${V.cap} · ${V.sea?'marítimo':'terrestre'}</div></div>
+            <button type="button" data-veh="${k}" ${f.money<V.cost?'disabled':''}>Montar</button></div>`; }
+        h+=`</div>`;
+      }
+    }
+
+    const here=World.units.filter(u=>u.loc===t.id);
+    h+=`<div class="block"><h3>Presença</h3>`;
+    if(!here.length) h+=`<div class="hint">Ninguém no território. Sem operadores a influência cai.</div>`;
+    else{ const g={};
+      for(const u of here){ const k=`${u.f}:${u.kind}:${u.state==='prep'?'p':'i'}`; g[k]=(g[k]||0)+1; }
+      for(const k in g){ const [fid,kind,st]=k.split(':');
+        h+=`<span class="chip">${UNITS[kind].icon} ${g[k]}× ${UNITS[kind].name} · ${World.fac[+fid].short}${st==='p'?' (preparando)':''}</span>`; }
+    }
+    h+=`</div>`;
+
+    // movimentação de pessoal
+    if(t.owner===0){
+      const idle=World.at(t.id,0);
+      h+=`<div class="block"><h3>Deslocar pessoal</h3>
+        <div class="hint">Selecione o destino clicando no mapa com o botão de envio ativo.</div>
+        <div class="btnrow" style="margin-top:6px">
+        <button type="button" id="sendOp" ${idle.some(u=>u.kind==='operador')?'':'disabled'} class="${moveMode==='operador'?'on':''}">Enviar operador</button>
+        <button type="button" id="sendSeg" ${idle.some(u=>u.kind==='seguranca')?'':'disabled'} class="${moveMode==='seguranca'?'on':''}">Enviar segurança</button></div></div>`;
+    }
+
+    // operação — ordem em dois estágios: rascunho (revisar) e confirmação
+    const advOwn=t.neighbors.filter(n=>World.ix[n].owner===0);
+    if(t.owner!==0 && advOwn.length){
+      if(!opDraft || opDraft.to!==t.id) opDraft={to:t.id, from:advOwn.sort((a,b)=>World.at(b,0,'seguranca').length-World.at(a,0,'seguranca').length)[0]};
+      const srcOptions=advOwn;
+      const q=Ops.quote(0, opDraft.from, t.id, opCount);
+      h+=`<div class="block"><h3>Ordem de operação — ${t.name}</h3>`;
+      if(srcOptions.length>1){
+        h+=`<div class="row"><span>Ponto de concentração</span>
+          <select id="opSrc" style="background:#1a3b43;color:var(--text);border:1px solid #2b5964;border-radius:4px;padding:3px">`;
+        for(const s of srcOptions) h+=`<option value="${s}" ${s===opDraft.from?'selected':''}>${World.ix[s].name}</option>`;
+        h+=`</select></div>`;
+      } else h+=`<div class="row"><span>Ponto de concentração</span><b>${World.ix[opDraft.from].name}</b></div>`;
+      h+=`<div class="row"><span>Rota</span><b>${World.ix[opDraft.from].name} → ${t.name} (${q.hops??'?'} trecho)</b></div>
+        <div class="item" style="margin-top:2px"><div class="ct">Pessoal a enviar</div>
+          <div class="btnrow"><button type="button" id="opMinus">−</button><b>${opCount}</b><button type="button" id="opPlus">+</button></div></div>
+        <div class="row"><span>Disponíveis na origem</span><b class="${q.availPersonnel<opCount?'warn':''}">${q.availPersonnel??0}</b></div>
+        <div class="row"><span>Munição exigida</span><b class="${World.ix[opDraft.from].stock.ammo<q.ammo?'warn':''}">${q.ammo} <small>(estoque: ${World.ix[opDraft.from].stock.ammo.toFixed(0)})</small></b></div>
+        <div class="row"><span>Combustível exigido</span><b class="${World.ix[opDraft.from].stock.fuel<q.fuel?'warn':''}">${q.fuel} <small>(estoque: ${World.ix[opDraft.from].stock.fuel.toFixed(0)})</small></b></div>
+        <div class="row"><span>Tempo de preparação</span><b>${Ops.PREP_HOURS} h + marcha</b></div>`;
+      h+=`<div class="hint" style="margin:6px 0 4px"><b>Estado atual do alvo</b></div>
+        <div class="row"><span>Controle</span><b>${q.target.owner==null?'sem dono':World.fac[q.target.owner].short}</b></div>
+        <div class="row"><span>Defensores (segurança)</span><b>${q.target.defenders}</b></div>
+        <div class="row"><span>Bônus de defesa</span><b>+${Math.round(q.target.defBonus*100)}%</b></div>
+        <div class="row"><span>Desordem local</span><b>${q.target.unrest}%</b></div>`;
+      if(!q.ok) h+=`<div class="hint warn" style="margin-top:6px">${q.reason}</div>`;
+      h+=`<button type="button" id="opGo" ${q.ok?'':'disabled'} style="width:100%;margin-top:8px">Confirmar e iniciar preparação (${Ops.PREP_HOURS} h)</button>
+        <div class="hint" style="margin-top:6px">Ao confirmar, o pessoal fica imobilizado e a munição/combustível saem do estoque imediatamente. A situação do alvo pode mudar durante o preparo — revise antes de confirmar.</div></div>`;
+    } else if(opDraft && opDraft.to===t.id){ opDraft=null; }
+    p.innerHTML=h;
+    p.querySelectorAll('button').forEach(b=>b.type='button');
+    p.querySelectorAll('button').forEach(b=>b.type='button');
+
+    p.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{
+      const err=Econ.buy(t,b.dataset.buy,+b.dataset.q); if(err) log(err,'hit'); else log(`Compra de ${b.dataset.q} de ${GOODS[b.dataset.buy].name} em ${t.name}.`);
+    });
+    p.querySelectorAll('[data-dist]').forEach(b=>b.onclick=()=>{
+      const g=b.dataset.dist, q=+b.dataset.dq;
+      const err=Econ.distribute(t,g,q);
+      if(err) log(err,'hit'); else log(`${Math.round(q)} ${GOODS[g].name} distribuídas para a Boca de ${t.name}.`);
+      panel();
+    });
+    p.querySelectorAll('[data-bld]').forEach(b=>b.onclick=()=>{
+      const k=b.dataset.bld; if(f.money<BUILD[k].cost) return;
+      f.money-=BUILD[k].cost; t.works.push({type:'build',k,p:0,need:BUILD[k].hours}); log(`Obra iniciada: ${BUILD[k].name} em ${t.name}.`);
+    });
+    const inf=p.querySelector('[data-infra]'); if(inf) inf.onclick=()=>{
+      const c=2200*t.infra; if(f.money<c) return; f.money-=c;
+      t.works.push({type:'infra',p:0,need:16*t.infra}); log(`Ampliação de infraestrutura em ${t.name}.`);
+    };
+    p.querySelectorAll('[data-unit]').forEach(b=>b.onclick=()=>{
+      const k=b.dataset.unit; if(f.money<UNITS[k].cost) return;
+      f.money-=UNITS[k].cost; t.works.push({type:'unit',k,p:0,need:UNITS[k].hours}); log(`${UNITS[k].name} em formação em ${t.name}.`);
+    });
+    p.querySelectorAll('[data-veh]').forEach(b=>b.onclick=()=>{
+      const k=b.dataset.veh; if(f.money<VEHICLES[k].cost) return;
+      f.money-=VEHICLES[k].cost; t.works.push({type:'veh',k,p:0,need:VEHICLES[k].hours}); log(`${VEHICLES[k].name} em montagem em ${t.name}.`);
+    });
+    const so=$('sendOp'), ss=$('sendSeg');
+    if(so) so.onclick=()=>{ moveMode=moveMode==='operador'?null:'operador'; moveFrom=t.id; panel(); };
+    if(ss) ss.onclick=()=>{ moveMode=moveMode==='seguranca'?null:'seguranca'; moveFrom=t.id; panel(); };
+    const om=$('opMinus'),op=$('opPlus'),og=$('opGo'),os=$('opSrc');
+    if(om) om.onclick=()=>{opCount=Math.max(1,opCount-1);panel();};
+    if(op) op.onclick=()=>{opCount++;panel();};
+    if(os) os.onchange=()=>{opDraft.from=os.value;panel();};
+    if(og) og.onclick=()=>{
+      const srcName=World.ix[opDraft.from].name;
+      const err=Ops.plan(0,opDraft.from,t.id,opCount);
+      if(err) log(err,'hit'); else { log(`Operação sobre <b>${t.name}</b> confirmada e em preparação a partir de ${srcName}.`); banner(`Preparando operação · ${Ops.PREP_HOURS} h`); opDraft=null; }
+      panel();
+    };
+  }
+
+  /* ---------- aba Logística ---------- */
+  function logiPanel(){
+    const p=$('panel');
+    $('selName').textContent='Logística';
+    $('selSub').textContent='Veículos, rotas e carga em trânsito.';
+    const mine=World.veh.filter(v=>v.f===0);
+    let h='';
+    if(routeWiz){
+      h+=`<div class="block"><h3>Nova rota — ${VEHICLES[World.veh.find(v=>v.id===routeWiz.veh).kind].name}</h3>`;
+      if(!routeWiz.a) h+=`<div class="hint">Clique no mapa no território de <b>origem</b> (de onde a carga sai).</div>`;
+      else if(!routeWiz.b) h+=`<div class="hint">Origem: <b>${World.ix[routeWiz.a].name}</b>. Agora clique no <b>destino</b>.</div>`;
+      else{
+        h+=`<div class="hint">${World.ix[routeWiz.a].name} → ${World.ix[routeWiz.b].name}. Escolha a mercadoria:</div><div class="btnrow" style="margin-top:7px">`;
+        for(const g of GK) h+=`<button type="button" data-wg="${g}">${GOODS[g].ab}</button>`;
+        h+=`</div>`;
+      }
+      h+=`<button type="button" id="wizCancel" style="margin-top:8px">Cancelar</button></div>`;
+    }
+    h+=`<div class="block"><h3>Frota (${mine.length})</h3>
+      <div class="row"><span>Motoristas</span><b>${World.fac[0].drivers}/${mine.length}</b></div>
+      <div class="row"><span>Administradores</span><b>${World.fac[0].admins}</b></div>
+      <div class="btnrow"><button type="button" id="hireDriver">Contratar motorista · $420</button><button type="button" id="hireAdmin">Contratar administrador · $520</button></div>
+      <div class="hint">Cada veículo precisa de motorista. Viagens desgastam a frota; veículos parados podem entrar em manutenção.</div>`;
+    if(!mine.length) h+=`<div class="hint">Sem veículos. Construa uma Garagem e monte ao menos um.</div>`;
+    for(const v of mine){
+      const V=VEHICLES[v.kind];
+      const where=v.loc!==null?World.ix[v.loc].name:'na estrada';
+      const cg=GK.filter(g=>v.cargo[g]>0.4).map(g=>`${GOODS[g].ab} ${Math.round(v.cargo[g])}`).join(' ')||'vazio';
+      const routeFuel=v.route&&v.loc!==null?Logi.requiredFuel(v,v.loc,v.route.b):0;
+      const fuelCls=v.fuel<Math.max(5,V.fuelCap*.15)?'warn':'';
+      h+=`<div class="item" style="align-items:flex-start"><div><div class="nm">${V.icon} ${V.name} #${v.id}</div>
+        <div class="ct">${where} · carga ${cg} / ${V.cap}<br>
+        combustível <b class="${fuelCls}">${v.fuel.toFixed(1)} / ${V.fuelCap}</b> · condição <b>${Math.round(v.condition||100)}%</b>${v.loc!==null?` · <span title="Estimativa para o destino atual">${routeFuel===Infinity?'—':routeFuel.toFixed(1)} necessário</span>`:''}
+        ${v.route?`<br>rota ${World.ix[v.route.a].name} → ${World.ix[v.route.b].name} (${GOODS[v.route.good].ab})`:'<br>sem rota'}
+        ${v.tradeId?`<br>venda #${v.tradeId} em transporte` : ''}
+        ${v.note?`<br><span class="warn">${v.note}</span>`:''}</div></div>
+        <div class="btnrow">
+          ${v.loc!==null&&v.fuel<V.fuelCap-0.1?`<button type="button" data-refuel="${v.id}">Abastecer</button>`:''}
+          ${v.loc!==null&&(v.condition||100)<99&&!v.route?`<button type="button" data-repair="${v.id}">Manutenção</button>`:''}
+          <button type="button" data-newroute="${v.id}">Rota</button>${v.route?`<button type="button" data-clr="${v.id}" class="danger">Parar</button>`:''}
+        </div></div>`;
+    }
+    h+=`</div>`;
+    h+=`<div class="block"><h3>Comércio entre facções</h3>`;
+    const myTrades=World.trades.filter(tr=>tr.seller===0&&tr.status!=='delivered'&&tr.status!=='cancelled');
+    if(!myTrades.length) h+=`<div class="hint">Nenhuma venda comercial em andamento.</div>`;
+    for(const tr of myTrades){
+      const buyer=World.fac[tr.buyer], free=mine.flatMap(t=>World.veh.filter(v=>v.f===0&&v.loc===t.id&&!v.route));
+      h+=`<div class="item" style="align-items:flex-start"><div>
+        <div class="nm">${GOODS[tr.good].name} → ${buyer.short}</div>
+        <div class="ct">${Math.round(tr.delivered)}/${Math.round(tr.qty)} · ${money(tr.unitPrice)}/un · ${World.ix[tr.origin].name} → ${World.ix[tr.dest].name}<br>
+        ${tr.status==='accepted'?'aguardando veículo':tr.status==='transporting'?'em trânsito':'em processamento'}</div>
+      </div>
+      <div class="btnrow">
+        ${tr.status==='accepted'&&free.length?`<button type="button" data-sendtrade="${tr.id}">Enviar</button>`:''}
+        ${tr.status==='accepted'?`<button type="button" data-canceltrade="${tr.id}" class="danger">Cancelar</button>`:''}
+      </div></div>`;
+    }
+    h+=`</div>`;
+    h+=`<div class="block"><h3>Estoques da facção</h3>`;
+    const tot={}; for(const g of GK) tot[g]=0;
+    for(const t of World.owned(0)) for(const g of GK) tot[g]+=t.stock[g];
+    for(const g of GK) h+=`<div class="row"><span><span class="tag" style="background:${GOODS[g].color}"></span>${GOODS[g].name}</span><b>${Math.round(tot[g])}</b></div>`;
+    h+=`</div><div class="hint">Cada veículo possui tanque próprio. O combustível é abastecido no território, permanece no veículo durante a viagem e é consumido ao longo da estrada. Ele não é retirado magicamente do destino.</div>`;
+    p.innerHTML=h;
+    p.querySelectorAll('button').forEach(b=>b.type='button');
+    const hd=$('hireDriver'); if(hd) hd.onclick=()=>{const e=Logi.hireDriver(0);if(e)log(e,'hit');else log('Motorista contratado.');panel();};
+    const ha=$('hireAdmin'); if(ha) ha.onclick=()=>{const e=Logi.hireAdmin(0);if(e)log(e,'hit');else log('Administrador contratado.');panel();};
+    p.querySelectorAll('[data-repair]').forEach(b=>{const v=World.veh.find(x=>x.id===+b.dataset.repair);const e=Logi.repair(v);if(e)log(e,'hit');else log(`${VEHICLES[v.kind].name} #${v.id} entrou em manutenção.`);panel();});
+    p.querySelectorAll('[data-refuel]').forEach(b=>{
+      const v=World.veh.find(x=>x.id===+b.dataset.refuel);
+      const err=Logi.refuel(v,VEHICLES[v.kind].fuelCap-v.fuel);
+      if(err) log(err,'hit'); else log(`${VEHICLES[v.kind].name} #${v.id} abastecido.`);
+      panel();
+    });
+    p.querySelectorAll('[data-newroute]').forEach(b=>b.onclick=()=>{ routeWiz={veh:+b.dataset.newroute,a:null,b:null}; panel(); });
+    p.querySelectorAll('[data-clr]').forEach(b=>b.onclick=()=>{ const v=World.veh.find(x=>x.id===+b.dataset.clr); v.route=null; v.phase='idle'; panel(); });
+    p.querySelectorAll('[data-sendtrade]').forEach(b=>{
+      const tr=World.trades.find(x=>x.id===+b.dataset.sendtrade);
+      const v=World.veh.find(x=>x.f===0&&x.loc===tr.origin&&!x.route);
+      if(v){
+        const err=Logi.assignTrade(v,tr);
+        if(err) log(err,'hit'); else log(`Entrega comercial iniciada: ${GOODS[tr.good].name} → ${World.fac[tr.buyer].short}.`);
+      } else log('Nenhum veículo livre na origem da venda.','hit');
+      panel();
+    });
+    p.querySelectorAll('[data-canceltrade]').forEach(b=>{
+      const tr=World.trades.find(x=>x.id===+b.dataset.canceltrade);
+      Econ.cancelTrade(tr); log('Venda comercial cancelada e carga não transportada devolvida ao estoque.'); panel();
+    });
+    p.querySelectorAll('[data-wg]').forEach(b=>b.onclick=()=>{
+      const v=World.veh.find(x=>x.id===routeWiz.veh);
+      const err=Logi.assign(v,routeWiz.a,routeWiz.b,b.dataset.wg);
+      log(err||`${VEHICLES[v.kind].name} #${v.id} em rota ${World.ix[routeWiz.a].name} → ${World.ix[routeWiz.b].name}.`, err?'hit':null);
+      routeWiz=null; panel();
+    });
+    const wc=$('wizCancel'); if(wc) wc.onclick=()=>{routeWiz=null;panel();};
+  }
+
+  /* ---------- aba Painel (saúde da organização) ---------- */
+  function painelPanel(){
+    const p=$('panel'), f=World.fac[0], mine=World.owned(0);
+    $('selName').textContent='Painel administrativo';
+    $('selSub').textContent='Saúde da organização e alertas que pedem decisão.';
+
+    let income=0;
+    for(const t of mine){
+      const mult=(1-t.unrest/110)*Math.min(1,(t.inf[0]||0)/70);
+      for(const g of SELLABLE) income+=Math.min(t.pointStock?.[g]>0?(t.demand[g]||0)*mult:0,(t.demand[g]||0))*GOODS[g].base*t.price[g]*(0.8+t.val*0.14);
+      if(t.type==='bairro'||t.type==='mercado') income+=t.pop/1000*0.55*Math.min(1,(t.inf[0]||0)/80);
+    }
+    const upk=World.upkeep(0);
+    const myVeh=World.veh.filter(v=>v.f===0);
+    const stuck=myVeh.filter(v=>v.note==='sem combustível'||v.note==='destino lotado'||v.note==='origem perdida').length;
+    const avgInf = mine.length? mine.reduce((s,t)=>s+(t.inf[0]||0),0)/mine.length : 0;
+    const avgUnrest = mine.length? mine.reduce((s,t)=>s+t.unrest,0)/mine.length : 0;
+    const tot={}; for(const g of GK) tot[g]=0; for(const t of mine) for(const g of GK) tot[g]+=t.stock[g];
+
+    const alerts=Alerts.list(0);
+    $('tabAlertCount').textContent = alerts.filter(a=>a.sev===2).length || '';
+
+    let h=`<div class="block"><h3>Alertas (${alerts.length})</h3>`;
+    if(!alerts.length) h+=`<div class="hint">Nada exigindo decisão imediata.</div>`;
+    else for(const a of alerts.slice(0,18)) h+=`<div class="alert sev${a.sev}" data-jump="${a.tid??''}"><i></i><span>${a.txt}</span></div>`;
+    h+=`</div>`;
+
+    h+=`<div class="block"><h3>Financeiro</h3>
+      <div class="row"><span>Caixa</span><b>${money(f.money)}</b></div>
+      <div class="row"><span>Receita</span><b>${money(income)}/h</b></div>
+      <div class="row"><span>Custeio</span><b class="warn">−${money(upk)}/h</b></div>
+      <div class="row"><span>Resultado líquido</span><b class="${income-upk<0?'warn':''}">${income-upk>=0?'+':''}${money(income-upk)}/h</b></div></div>`;
+
+    h+=`<div class="block"><h3>Estoque da organização</h3>`;
+    for(const g of GK) h+=`<div class="row"><span><span class="tag" style="background:${GOODS[g].color}"></span>${GOODS[g].name}</span><b>${Math.round(tot[g])}</b></div>`;
+    h+=`</div>`;
+
+    h+=`<div class="block"><h3>Operação e frota</h3>
+      <div class="row"><span>Frota total</span><b>${myVeh.length}</b></div>
+      <div class="row"><span>Frota parada/travada</span><b class="${stuck?'warn':''}">${stuck}</b></div>
+      <div class="row"><span>Pessoal (operadores/segurança)</span><b>${World.units.filter(u=>u.f===0&&u.kind==='operador').length} / ${World.units.filter(u=>u.f===0&&u.kind==='seguranca').length}</b></div>
+      <div class="row"><span>Operações em preparo</span><b>${World.ops.filter(o=>o.f===0).length}</b></div></div>`;
+
+    h+=`<div class="block"><h3>Território</h3>
+      <div class="row"><span>Territórios controlados</span><b>${mine.length} / ${World.terr.length}</b></div>
+      <div class="row"><span>Influência média</span><b>${Math.round(avgInf)}%</b></div>
+      <div class="bar"><i style="width:${avgInf}%"></i></div>
+      <div class="row"><span>Desordem média</span><b class="${avgUnrest>30?'warn':''}">${Math.round(avgUnrest)}%</b></div>
+      <div class="bar"><i style="width:${avgUnrest}%;background:${avgUnrest>30?'var(--red)':'var(--gold)'}"></i></div></div>`;
+
+    h+=`<div class="block"><h3>Pressão policial</h3>
+      <div class="bar"><i style="width:${f.heat}%;background:${f.heat>CONF.raidAt?'var(--red)':'var(--gold)'}"></i></div>
+      <div class="hint">${Math.round(f.heat)}% — limiar de operação em ${CONF.raidAt}%.</div></div>`;
+
+    p.innerHTML=h;
+    p.querySelectorAll('button').forEach(b=>b.type='button');
+    p.querySelectorAll('[data-jump]').forEach(el=>el.onclick=()=>{
+      if(!el.dataset.jump) return;
+      World.selected=el.dataset.jump; tab='terr';
+      document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab==='terr'));
+      panel();
+    });
+  }
+
+  /* ---------- aba Facção ---------- */
+  function facPanel(){
+    const p=$('panel'), f=World.fac[0];
+    $('selName').textContent=f.name;
+    $('selSub').textContent='Domínio, rivais e operações em curso.';
+    const need=Math.ceil(World.terr.length*CONF.victoryShare);
+    let h=`<div class="block specialtyCard"><h3>Especialização da facção</h3><div class="nm">${f.specialty.name}</div><div class="uiHelp">${f.specialty.desc}</div></div><div class="block"><h3>Domínio</h3>
+      <div class="row"><span>Territórios</span><b>${World.owned(0).length} / ${World.terr.length}</b></div>
+      <div class="row"><span>Meta</span><b>${need} por ${CONF.holdHours} h seguidas</b></div>
+      <div class="bar"><i style="width:${Math.min(100,f.hold/CONF.holdHours*100)}%"></i></div></div>`;
+    h+=`<div class="block"><h3>Relações</h3>`;
+    for(const o of World.fac){ if(o.id===0) continue;
+      const rel=World.relation(0,o.id);
+      h+=`<div class="row"><span>${o.short}</span><b>${rel}</b></div>`;
+      if(rel!=='aliada') h+=`<button type="button" data-ally="${o.id}" style="margin:3px 0 6px">Propor aliança</button>`;
+    }
+    h+=`</div>`;
+
+    const allies=World.fac.filter(o=>o.id!==0&&World.relation(0,o.id)==='aliada');
+    h+=`<div class="block"><h3>Contratos de fornecimento</h3><button type="button" id="openContractModal" class="primary" style="width:100%;margin-bottom:7px">＋ Nova proposta de fornecimento</button>`;
+    if(!allies.length) h+=`<div class="hint">Nenhuma facção aliada. Uma aliança libera o comércio direto.</div>`;
+    else{
+      const origins=World.owned(0).filter(t=>GK.some(g=>(t.stock[g]||0)>0));
+      h+=`<div class="hint">A carga fica reservada no estoque da origem até um veículo ser enviado. O pagamento só ocorre na entrega.</div>`;
+      h+=`<div class="item"><span>Comprador</span><select id="tradeBuyer" style="background:#1a3b43;color:var(--text);border:1px solid #2b5964;border-radius:4px;padding:4px">`;
+      for(const o of allies) h+=`<option value="${o.id}">${o.short}</option>`;
+      h+=`</select></div>`;
+      h+=`<div class="item"><span>Mercadoria</span><select id="tradeGood" style="background:#1a3b43;color:var(--text);border:1px solid #2b5964;border-radius:4px;padding:4px">`;
+      for(const g of ['armas','ammo','fuel','insumo','cinza','ambar','rubra']) h+=`<option value="${g}">${GOODS[g].name}</option>`;
+      h+=`</select></div>`;
+      h+=`<div class="item"><span>Origem</span><select id="tradeOrigin" style="background:#1a3b43;color:var(--text);border:1px solid #2b5964;border-radius:4px;padding:4px;max-width:180px">`;
+      for(const t of origins) h+=`<option value="${t.id}">${t.name}</option>`;
+      h+=`</select></div>`;
+      h+=`<div class="item"><span>Quantidade</span><input id="tradeQty" type="number" min="1" value="25" style="width:90px;background:#102d33;color:var(--text);border:1px solid #2b5964;border-radius:4px;padding:5px"></div>`;
+      h+=`<div class="item"><span>Preço/un.</span><input id="tradePrice" type="number" min="1" value="65" style="width:90px;background:#102d33;color:var(--text);border:1px solid #2b5964;border-radius:4px;padding:5px"></div>`;
+      h+=`<button type="button" id="createTrade" style="width:100%">Criar ordem de venda</button>`;
+    }
+    h+=`</div>`;
+
+    h+=`<div class="block"><h3>Rivais</h3>`;
+    for(const o of World.fac){ if(o.id===0) continue;
+      const ops=World.ops.filter(x=>x.f===o.id);
+      h+=`<div class="row"><span><span class="tag" style="background:${o.color}"></span>${o.short}</span>
+        <b>${World.owned(o.id).length} terr.${ops.length?' <span class="warn">concentrando</span>':''}</b></div>`; }
+    h+=`</div>`;
+    const myOps=World.ops.filter(x=>x.f===0);
+    if(myOps.length){
+      h+=`<div class="block"><h3>Suas operações</h3>`;
+      for(const o of myOps) h+=`<div class="item"><div><div class="nm">${World.ix[o.to].name}</div>
+        <div class="ct">${o.state==='prep'?`preparando · ${Math.ceil(o.need-o.prep)} h`:o.state}</div></div>
+        ${o.state==='prep'?`<button type="button" data-cancel="${o.id}" class="danger">Abortar</button>`:''}</div>`;
+      h+=`</div>`;
+    }
+    p.innerHTML=h;
+    p.querySelectorAll('button').forEach(b=>b.type='button');
+    const oc=$('openContractModal'); if(oc) oc.onclick=()=>contractUI.show();
+    p.querySelectorAll('[data-ally]').forEach(b=>b.onclick=()=>{
+      const fid=+b.dataset.ally;
+      World.setRelation(0,fid,'aliada');
+      log(`${World.fac[fid].short} agora é uma facção aliada para fins de comércio.`);
+      panel();
+    });
+    const ct=$('createTrade');
+    if(ct) ct.onclick=()=>{
+      const buyer=+$('tradeBuyer').value, good=$('tradeGood').value, origin=$('tradeOrigin').value;
+      const qty=+$('tradeQty').value, price=+$('tradePrice').value;
+      const err=Econ.createTrade(0,buyer,good,qty,price,origin);
+      if(err) log(err,'hit'); else log(`Ordem criada: ${Math.round(qty)} ${GOODS[good].name} para ${World.fac[buyer].short}.`);
+      panel();
+    };
+    p.querySelectorAll('[data-cancel]').forEach(b=>b.onclick=()=>{
+      const o=World.ops.find(x=>x.id===+b.dataset.cancel); if(o){Ops.cancel(o);log('Operação abortada. Munição devolvida ao estoque.');} panel();
+    });
+  }
+
+  let moveMode=null, moveFrom=null;
+  function membersPanel(){
+    const p=$('panel'), f=World.fac[0];
+    $('selName').textContent='Membros da facção'; $('selSub').textContent='Pessoal, experiência e equipamentos individuais.';
+    let h=`<div class="block specialtyCard"><h3>Especialização</h3><div class="nm">${f.specialty.name}</div><div class="uiHelp">${f.specialty.desc}</div></div>`;
+    const mine=World.units.filter(u=>u.f===0);
+    if(!mine.length) h+=`<div class="hint">Nenhum membro recrutado. Construa um Ponto ou Refúgio para formar pessoal.</div>`;
+    for(const u of mine){
+      const inv=(u.equipment||[]).map(x=>`<span class="equipChip">${EQUIPMENT[x].name}</span>`).join('')||'<span class="muted">sem equipamento</span>';
+      h+=`<div class="memberCard"><div><div class="nm">${UNITS[u.kind].icon} ${UNITS[u.kind].name} #${u.id}</div>
+        <div class="memberMeta">${u.personality} · ${u.experience} exp · eficiência ${Math.round(World.unitEfficiency(u))}% · ${u.status}<br>Atua em: ${u.loc?World.ix[u.loc]?.name||'em trânsito':'em trânsito'}</div>
+        <div class="equipList">${inv}</div></div><div class="btnrow"><select data-equip-select="${u.id}"><option value="">Equipar…</option>${Object.entries(EQUIPMENT).map(([k,e])=>`<option value="${k}">${e.name}</option>`).join('')}</select></div></div>`;
+    }
+    h+=`<div class="block"><h3>Equipamentos disponíveis</h3>${Object.entries(EQUIPMENT).map(([k,e])=>`<div class="row"><span>${e.name} <small style="color:var(--muted)">${e.slot}</small></span><span class="uiHelp">${e.desc}</span></div>`).join('')}</div>`;
+    p.innerHTML=h;
+    p.querySelectorAll('[data-equip-select]').forEach(s=>s.onchange=()=>{const u=World.units.find(x=>x.id===+s.dataset.equipSelect); if(s.value&&u){World.equip(u,s.value);u.maxhp=World.unitMaxHp(u);u.hp=Math.min(u.hp,u.maxhp);log(`${UNITS[u.kind].name} #${u.id} recebeu <b>${EQUIPMENT[s.value].name}</b>.`,'win');panel();}});
+  }
+  function panel(){ if(tab==='terr') terrPanel(); else if(tab==='logi') logiPanel(); else if(tab==='fac') facPanel(); else membersPanel(); const p=$('panel'); p.querySelectorAll('button').forEach(b=>{if(!b.title){const tx=b.textContent.trim();if(tx)b.title=tx;}}); }
+
+  $('contractClose').onclick=()=>contractUI.hide();$('contractCancel').onclick=()=>contractUI.hide();$('contractModal').addEventListener('click',e=>{if(e.target.id==='contractModal')contractUI.hide();else e.stopPropagation()});addEventListener('keydown',e=>{if(e.key==='Escape'&&contractUI.open){e.preventDefault();contractUI.hide()}});$('contractSubmit').onclick=()=>{const buyer=+$('modalBuyer').value,good=$('modalGood').value,origin=+$('modalOrigin').value,qty=+$('modalQty').value,price=+$('modalPrice').value;if(!buyer||!origin||!good||qty<=0||price<=0){log('Preencha todos os campos da proposta.','hit');return}const err=Econ.createTrade(0,buyer,good,qty,price,origin);if(err){log(err,'hit');return}log(`Proposta enviada: ${Math.round(qty)} ${GOODS[good].name} para ${World.fac[buyer].short}.`,'win');contractUI.hide();panel()};
+  document.querySelectorAll('button').forEach(b=>b.type='button');
+  document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
+    tab=b.dataset.tab; document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b)); panel();
+  });
+  document.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{
+    World.speed=+b.dataset.sp; document.querySelectorAll('[data-sp]').forEach(x=>x.classList.toggle('on',x===b));
+  });
+  addEventListener('keydown',e=>{ if(e.code==='Space'){e.preventDefault();
+    document.querySelector(World.speed===0?'[data-sp="1"]':'[data-sp="0"]').click();}});
+  addEventListener('resize',()=>{Render.fit();Render.draw();});
+
+  Render.cv.addEventListener('pointerdown',e=>{
+    if(World.over) return;
+    const [x,y]=Render.toWorld(e.clientX,e.clientY);
+    let hit=null; for(const t of World.terr) if(MapData.inPoly([x,y],t.poly)){hit=t;break;}
+    if(!hit){ World.selected=null; moveMode=null; panel(); return; }
+
+    if(routeWiz){
+      if(!routeWiz.a) routeWiz.a=hit.id;
+      else if(!routeWiz.b && hit.id!==routeWiz.a) routeWiz.b=hit.id;
+      panel(); return;
+    }
+    if(moveMode && moveFrom && hit.id!==moveFrom){
+      const u=World.at(moveFrom,0,moveMode)[0];
+      const sea=false;
+      const p=World.path(moveFrom,hit.id,sea);
+      if(!p) log('Sem caminho terrestre até lá. Ilhas exigem transporte marítimo.','hit');
+      else { u.state='moving'; u.path=p; log(`${UNITS[moveMode].name} a caminho de ${hit.name} (${p.length} trecho${p.length>1?'s':''}).`); }
+      moveMode=null; World.selected=hit.id; panel(); return;
+    }
+    World.selected=hit.id; moveMode=null; panel();
+  });
+
+  function overlay(title,sub,html){ $('overlayCard').innerHTML=`<h1>${title}</h1><p>${sub}</p>${html}`; $('overlay').classList.add('on'); }
+  function end(won,f){
+    World.over=true; World.speed=0;
+    overlay(won?'A península é sua':'Fim de linha',
+      won?`Dia ${Math.floor(World.h/24)+1}. Sua organização consolidou o domínio da cidade.`
+         :(f?`${f.name} consolidou o domínio da cidade.`:'Sua organização deixou de existir.'),
+      `<button type="button" id="again">Recomeçar</button>`);
+    $('again').onclick=()=>{ $('overlay').classList.remove('on'); Game.start(); };
+  }
+  return {log,banner,hud,panel,overlay,end,reset(){moveMode=null;routeWiz=null;opCount=1;opDraft=null;tab='terr';
+    document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab==='terr'));}};
+})();
+
+/* ================================= Loop ================================= */
+const Game=(()=>{
+  let acc=0,last=performance.now(),ui=0;
+  function step(dh){
+    World.h+=dh;
+    Prod.tick(dh); Econ.tick(dh); Logi.tick(dh); City.tick(dh); City.cleanup(); Influence.tick(dh);
+    Ops.tick(dh); Police.tick(dh); AI.tick(dh); Rules.tick(dh);
+  }
+  function frame(now){
+    const raw=Math.min(0.25,(now-last)/1000); last=now;
+    if(!World.over&&World.speed>0){
+      acc+=raw*World.speed*CONF.hoursPerRealSecond;
+      let g=0; const st=0.05;
+      while(acc>=st&&g++<400){ step(st); acc-=st; }
+    }
+    Render.draw();
+    ui+=raw; if(ui>1.20 && !document.getElementById('contractModal')?.classList.contains('open')){ ui=0; UI.hud(); UI.panel(); }
+    requestAnimationFrame(frame);
+  }
+  function start(){
+    World.reset(); UI.reset(); Render.fit(); World.speed=1;
+    document.querySelectorAll('[data-sp]').forEach(x=>x.classList.toggle('on',x.dataset.sp==='1'));
+    UI.hud(); UI.panel();
+    UI.log('Você administra o <b>Coletivo da Armação</b>, com sede no Centro. Três organizações rivais fazem o mesmo.');
+  }
+  return {start,frame};
+})();
+
+Game.start();
+UI.overlay('Península',
+  'Uma cidade fictícia inspirada no litoral fluminense. Você não comanda um exército: administra uma organização que precisa sustentar território, estoque, frota e pessoal — e o custeio corre a cada hora.',
+  `<ol>
+    <li><b>Compre</b> insumo, combustível e munição num <b>porto</b> seu. Nada surge do nada.</li>
+    <li><b>Produza</b>: oficinas transformam insumo em carga; sítios produzem Carga Cinza devagar.</li>
+    <li><b>Transporte</b>: cada veículo tem tanque próprio, motorista e condição mecânica. Viagens longas consomem combustível e desgastam a frota.</li>
+    <li><b>Distribua</b>: a carga chega ao estoque do território e precisa entrar fisicamente numa <b>Boca</b> antes de gerar receita. Demanda e preço variam localmente.</li>
+    <li><b>Administre</b>: contrate motoristas e administradores, faça manutenção e mantenha o caixa saudável.</li>
+    <li><b>Influência</b>: operadores presentes elevam o controle; território sem presença escorrega para fora das suas mãos.</li>
+    <li><b>Complexos</b>: cada território tem uma função econômica. Clique no mapa para ver produção, capacidade e especialização local.</li>
+    <li><b>Pessoal</b>: a aba <b>Membros</b> mostra experiência e equipamentos. Você pode equipar cada membro; a IA também equipa os seus.</li>
+    <li><b>Equipamentos</b>: AY-47, GLOKY, Carabina 9X, munições fictícias e kits de apoio têm efeitos abstratos na simulação.</li>
+    <li><b>Conflito é caro</b>: operações exigem munição posicionada e preparação, e deixam desordem por dias.</li>
+  </ol>
+  <p>Vitória: controlar 11 dos 18 territórios por 36 horas seguidas. Espaço pausa; use 8× e 20× para atravessar a rotina.</p>
+  <button type="button" id="go">Assumir a administração</button>`);
+document.getElementById('go').onclick=()=>document.getElementById('overlay').classList.remove('on');
+requestAnimationFrame(Game.frame);
+</script>
+</body>
+</html>
