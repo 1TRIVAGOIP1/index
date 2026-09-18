@@ -88,6 +88,48 @@ button.danger{border-color:#7a3a2d;color:#f0a793}
 .dep:last-child{border-bottom:0}
 .depNeed{color:var(--gold);font-size:11px}
 .pillGood{color:var(--green)}.pillWarn{color:var(--gold)}
+
+/* Menu inicial + responsividade mobile */
+.menuCard{width:min(620px,100%);text-align:left}
+.menuLogo{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:8px}
+.menuTitle{font-size:32px!important;margin-bottom:6px!important}
+.menuGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.menuField{display:flex;flex-direction:column;gap:6px}
+.menuField.full{grid-column:1/-1}
+.menuField label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.menuField input,.menuField select{width:100%;background:#0a1c21;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:11px 12px;font:inherit;outline:none}
+.menuField input:focus,.menuField select:focus{border-color:var(--gold)}
+.menuActions{display:flex;gap:8px;margin-top:14px}
+.menuActions button{flex:1;min-height:44px}
+.menuNote{padding:10px 12px;border:1px solid #17363d;border-radius:6px;background:#0b2026;color:var(--muted);line-height:1.45;font-size:12px}
+@media(max-width:900px){
+  html,body{overflow:hidden}
+  #app{height:100dvh;min-height:0}
+  #mapWrap{min-height:0;flex:1 1 56dvh}
+  #side{height:44dvh;max-height:44dvh;min-height:0;transition:height .18s ease,max-height .18s ease,width .18s ease}
+  #side.collapsed{height:0;max-height:0;flex-basis:0}
+  #tabs{overflow-x:auto;scrollbar-width:none}
+  #tabs::-webkit-scrollbar{display:none}
+  #tabs button{flex:0 0 auto;min-width:92px;min-height:44px;padding:0 10px}
+  #head{padding:9px 12px 7px}
+  #panel{padding:10px 12px 14px}
+  #log{height:58px;padding:6px 12px}
+  #hud{padding:7px 9px;gap:8px;font-size:12px}
+  .brand{font-size:14px}.brand small{font-size:9px}
+  #heatBar{width:66px}
+  #speed{left:8px;bottom:8px}
+  #speed button{min-width:38px;min-height:38px;padding:0 7px}
+  #sideToggle{position:absolute;left:auto;right:10px;top:-38px;width:38px;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--panel);box-shadow:0 4px 14px #0006}
+  #side.collapsed #sideToggle{display:block;right:10px;left:auto;top:-38px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+  #overlay{padding:12px}
+  #overlay .card{width:min(100%,560px);max-height:92dvh;padding:20px 16px;border-radius:10px}
+  #overlay h1{font-size:22px}
+  .menuTitle{font-size:28px!important}
+  .menuGrid{grid-template-columns:1fr;gap:9px;margin:12px 0}
+  .menuField.full{grid-column:auto}
+  .menuActions{flex-direction:column}
+}
+@media(max-width:430px){#rTerr,#rUnits{font-size:11px}.res{gap:3px}.menuTitle{font-size:25px!important}}
 </style>
 </head>
 <body>
@@ -1831,21 +1873,37 @@ const Game=(()=>{
   return {start,frame};
 })();
 
-Game.start();
-UI.overlay('Península',
-  'Uma cidade fictícia inspirada no litoral fluminense. Você não comanda um exército: administra uma organização que precisa sustentar território, estoque, frota e pessoal — e o custeio corre a cada hora.',
-  `<ol>
-    <li><b>Compre</b> insumo, combustível e munição num <b>porto</b> seu. Nada surge do nada.</li>
-    <li><b>Produza</b>: oficinas transformam insumo em carga; sítios produzem Carga Cinza devagar.</li>
-    <li><b>Transporte</b>: cada veículo tem tanque próprio, motorista e condição mecânica. Viagens longas consomem combustível e desgastam a frota.</li>
-    <li><b>Distribua</b>: a carga chega ao estoque do território e precisa entrar fisicamente numa <b>Boca</b> antes de gerar receita. Demanda e preço variam localmente.</li>
-    <li><b>Administre</b>: contrate motoristas e administradores, faça manutenção e mantenha o caixa saudável.</li>
-    <li><b>Influência</b>: operadores presentes elevam o controle; território sem presença escorrega para fora das suas mãos.</li>
-    <li><b>Conflito é caro</b>: operações exigem munição posicionada e 14 h de preparação, e deixam desordem por dias.</li>
-  </ol>
-  <p>Vitória: controlar 11 dos 18 territórios por 36 horas seguidas. Espaço pausa; use 8× e 20× para atravessar a rotina.</p>
-  <button id="go">Assumir a administração</button>`);
-document.getElementById('go').onclick=()=>document.getElementById('overlay').classList.remove('on');
+World.reset(); UI.reset(); Render.fit(); World.speed=0; UI.hud(); UI.panel();
+function mainMenu(){
+  UI.overlay('','',`
+    <div class="menuCard">
+      <div class="menuLogo">Península · administração territorial</div>
+      <h1 class="menuTitle">Nova administração</h1>
+      <p>Monte sua organização antes de entrar no mapa. A identidade escolhida fica associada à sua facção nesta partida.</p>
+      <div class="menuGrid">
+        <div class="menuField full"><label for="cfgName">Nome da facção</label><input id="cfgName" maxlength="32" value="Coletivo da Armação" placeholder="Ex.: União da Península"></div>
+        <div class="menuField"><label for="cfgShort">Nome curto</label><input id="cfgShort" maxlength="16" value="Armação" placeholder="Ex.: União"></div>
+        <div class="menuField"><label for="cfgFocus">Perfil inicial</label><select id="cfgFocus"><option value="comercio">Comércio e distribuição</option><option value="logistica">Logística e frota</option><option value="territorio">Administração territorial</option></select></div>
+      </div>
+      <div class="menuNote"><b>Objetivo:</b> administrar caixa, territórios, estoque, veículos e pessoal. Outras facções possuem necessidades próprias; a coordenação entre jogadores poderá ser necessária para compras, transporte e contratos.</div>
+      <div class="menuActions"><button id="go">Começar jogo</button><button id="how" class="ghost">Como jogar</button></div>
+    </div>`);
+  $('cfgName').focus();
+  $('go').onclick=()=>{
+    const name=$('cfgName').value.trim()||'Coletivo da Armação';
+    const short=$('cfgShort').value.trim()||name.slice(0,16);
+    FACTIONS[0].name=name; FACTIONS[0].short=short; FACTIONS[0].human=true;
+    World.reset(); UI.reset(); Render.fit(); World.speed=1;
+    document.querySelectorAll('[data-sp]').forEach(x=>x.classList.toggle('on',x.dataset.sp==='1'));
+    UI.hud(); UI.panel(); UI.log(`Você administra o <b>${name}</b>. Perfil: ${$('cfgFocus').selectedOptions[0].text}.`);
+    $('overlay').classList.remove('on');
+  };
+  $('how').onclick=()=>{
+    UI.overlay('Como jogar','Uma visão rápida antes de começar.',`<ol><li><b>Território:</b> selecione áreas no mapa para administrar influência, estruturas e estoque.</li><li><b>Logística:</b> veículos transportam mercadorias fisicamente e consomem combustível.</li><li><b>Facção:</b> acompanhe caixa, frota, pessoal e relações.</li><li><b>Coordenação:</b> envie solicitações para outras facções. A ideia é transformar pedidos em acordos, contratos e entregas reais.</li><li><b>Ritmo:</b> use 1× para administrar com calma e acelere quando estiver apenas acompanhando.</li></ol><button id="backMenu">Voltar ao menu</button>`);
+    $('backMenu').onclick=mainMenu;
+  };
+}
+mainMenu();
 requestAnimationFrame(Game.frame);
 </script>
 </body>
