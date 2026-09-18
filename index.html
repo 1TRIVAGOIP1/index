@@ -74,6 +74,20 @@ button.danger{border-color:#7a3a2d;color:#f0a793}
 #overlay p{margin:0 0 13px;color:var(--muted);line-height:1.55}
 #overlay ol{margin:0 0 16px;padding-left:20px;line-height:1.65}
 @media(max-width:900px){#app{flex-direction:column}#side{width:100%;flex:0 0 auto;max-height:52vh;border-left:none;border-top:1px solid var(--line)}#mapWrap{flex:1 1 48vh}#log{height:70px}}
+
+/* Painel lateral recolhível */
+#side{position:relative;transition:width .18s ease,flex-basis .18s ease}
+#side.collapsed{width:0;flex-basis:0;border-left:0;overflow:visible}
+#side.collapsed > *{display:none}
+#sideToggle{position:absolute;left:-30px;top:12px;z-index:50;width:30px;height:34px;border:1px solid var(--line);border-right:0;border-radius:8px 0 0 8px;background:var(--panel);color:var(--text);font-size:16px;cursor:pointer;box-shadow:0 4px 14px #0006}
+#side.collapsed #sideToggle{display:block;left:0;border:1px solid var(--line);border-radius:0 8px 8px 0}
+#coordGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.coordCard{border:1px solid var(--line);background:#0b2026;border-radius:8px;padding:9px}
+.coordCard .ct{line-height:1.4}
+.dep{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #17363d}
+.dep:last-child{border-bottom:0}
+.depNeed{color:var(--gold);font-size:11px}
+.pillGood{color:var(--green)}.pillWarn{color:var(--gold)}
 </style>
 </head>
 <body>
@@ -95,11 +109,13 @@ button.danger{border-color:#7a3a2d;color:#f0a793}
     <div id="overlay"><div class="card" id="overlayCard"></div></div>
   </div>
   <aside id="side">
+    <button id="sideToggle" type="button" title="Fechar painel lateral" aria-label="Fechar painel lateral">❯</button>
     <div id="tabs">
       <button data-tab="terr" class="on">Território</button>
       <button data-tab="logi">Logística</button>
       <button data-tab="painel">Painel<span id="tabAlertCount"></span></button>
       <button data-tab="fac">Facção</button>
+      <button data-tab="coord">Coordenação</button>
     </div>
     <div id="head"><h2 id="selName">Península</h2><p id="selSub">Selecione um território no mapa.</p></div>
     <div id="panel"></div>
@@ -238,14 +254,14 @@ const MapData = (()=>{
 
 /* ================================ World ================================= */
 const World = {
-  h:6, uid:1, terr:[], ix:{}, fac:[], units:[], veh:[], ops:[], trades:[], loans:[], events:[], relations:{}, over:false, speed:1, selected:null,
+  h:6, uid:1, terr:[], ix:{}, fac:[], units:[], veh:[], ops:[], trades:[], loans:[], events:[], relations:{}, coordination:{requests:[],seq:1}, over:false, speed:1, selected:null,
 
   reset(){
     const {list,ix}=MapData.build();
     this.terr=list; this.ix=ix; this.units=[]; this.veh=[]; this.ops=[]; this.trades=[]; this.loans=[]; this.events=[];
     this.h=6; this.uid=1; this.over=false; this.selected=null;
     this.fac=FACTIONS.map(f=>({...f, money:9000, heat:0, alive:true, hold:0, lastOp:-200, mood:'consolidar',drivers:0,admins:2,credit:0,reputation:50}));
-    this.relations={};
+    this.relations={}; this.coordination={requests:[],seq:1};
     for(let a=0;a<this.fac.length;a++) for(let b=0;b<this.fac.length;b++) this.relations[`${a}:${b}`]=a===b?'aliada':'neutra';
     // Um parceiro comercial inicial permite testar o sistema imediatamente.
     this.relations['0:1']=this.relations['1:0']='aliada';
@@ -1231,6 +1247,26 @@ const Render=(()=>{
   return {fit,draw,toWorld,cv};
 })();
 
+/* ============================ Coordenação =============================== */
+const Coord = (()=>{
+  const profiles={
+    0:{role:'Comércio e distribuição',needs:[['ammo','Geribá'],['armas','Manguinhos'],['logi','Brava']]},
+    1:{role:'Armamentos',needs:[['insumo','Armação'],['ammo','Geribá'],['logi','Brava']]},
+    2:{role:'Munição',needs:[['insumo','Armação'],['logi','Brava'],['buyers','Armação']]},
+    3:{role:'Logística e frota',needs:[['fuel','Armação'],['contracts','Armação'],['maintenance','Armação']]},
+  };
+  function profile(fid){return profiles[fid]||{role:'Especialização local',needs:[]};}
+  function openRequest(from,to,type,qty,note=''){
+    if(from===to) return 'A solicitação precisa envolver outra facção.';
+    const r={id:World.coordination.seq++,from,to,type,qty:Math.max(1,Math.round(qty)),note,state:'pendente',created:World.h};
+    World.coordination.requests.push(r); return r;
+  }
+  function accept(id){const r=World.coordination.requests.find(x=>x.id===id);if(!r)return 'Solicitação inexistente.';r.state='aceita';r.accepted=World.h;return r;}
+  function reject(id){const r=World.coordination.requests.find(x=>x.id===id);if(!r)return 'Solicitação inexistente.';r.state='recusada';return r;}
+  function mine(){return World.coordination.requests.filter(r=>r.from===0||r.to===0);}
+  return {profile,openRequest,accept,reject,mine};
+})();
+
 /* ================================== UI ================================== */
 const UI=(()=>{
   const $=id=>document.getElementById(id);
@@ -1688,15 +1724,47 @@ const UI=(()=>{
   }
 
   let moveMode=null, moveFrom=null;
-  function panel(){ if(tab==='terr') terrPanel(); else if(tab==='logi') logiPanel(); else facPanel(); }
+  function coordPanel(){
+    const p=$('panel'), f=World.fac[0], mine=Coord.mine();
+    $('selName').textContent='Coordenação';
+    $('selSub').textContent='Dependências, pedidos e acordos entre facções.';
+    const prof=Coord.profile(0);
+    let h=`<div class="block"><h3>Seu papel</h3><div class="coordCard"><div class="nm">${prof.role}</div><div class="ct">Você não precisa produzir tudo. Especialização cria motivos para negociar com outros jogadores.</div></div></div>`;
+    h+=`<div class="block"><h3>Dependências</h3><div>`;
+    for(const [need,label] of prof.needs){
+      const partner=Object.values(World.fac).find(x=>x.short===label);
+      if(!partner) continue;
+      const rel=World.relation(0,partner.id);
+      h+=`<div class="dep"><div><b>${need==='buyers'?'Compradores':need==='contracts'?'Contratos':need==='logi'?'Transporte':need==='maintenance'?'Manutenção':GOODS[need]?.name||need}</b><div class="ct">${partner.short} · ${rel}</div></div><span class="depNeed">${rel==='aliada'?'disponível':'negociar'}</span></div>`;
+    }
+    h+=`</div><div class="hint" style="margin-top:7px">Dependências não bloqueiam o jogo agora; elas orientam o futuro multiplayer. Em uma partida com players, preços, prazos e logística deverão ser combinados entre organizações.</div></div>`;
+    h+=`<div class="block"><h3>Pedidos entre facções</h3>`;
+    if(!mine.length) h+=`<div class="hint">Nenhum pedido. Crie uma solicitação para outro jogador ou responda às que chegarem.</div>`;
+    for(const r of mine.slice(-8).reverse()){
+      const other=r.from===0?World.fac[r.to]:World.fac[r.from];
+      h+=`<div class="coordCard" style="margin-bottom:7px"><div class="row"><span>${r.from===0?'Você → ':'← '}${other.short}</span><b>${r.state}</b></div><div class="ct">${r.type} · ${r.qty} · ${r.note||'sem observação'}</div>`;
+      if(r.to===0&&r.state==='pendente') h+=`<div class="btnrow" style="margin-top:6px"><button data-req-accept="${r.id}">Aceitar</button><button data-req-reject="${r.id}" class="danger">Recusar</button></div>`;
+      h+=`</div>`;
+    }
+    h+=`</div>`;
+    h+=`<div class="block"><h3>Solicitar apoio</h3><div class="item"><span>Facção</span><select id="coordTo" style="background:#1a3b43;color:var(--text);border:1px solid #2b5964;border-radius:4px;padding:4px">${World.fac.filter(x=>x.id!==0).map(x=>`<option value="${x.id}">${x.short}</option>`).join('')}</select></div><div class="item"><span>Tipo</span><select id="coordType" style="background:#1a3b43;color:var(--text);border:1px solid #2b5964;border-radius:4px;padding:4px"><option>Compra de insumos</option><option>Compra de munição</option><option>Transporte</option><option>Manutenção</option><option>Venda programada</option></select></div><div class="item"><span>Quantidade</span><input id="coordQty" type="number" min="1" value="25" style="width:90px;background:#102d33;color:var(--text);border:1px solid #2b5964;border-radius:4px;padding:5px"></div><div class="item"><span>Observação</span><input id="coordNote" placeholder="prazo, preço ou condição" style="flex:1;min-width:0;background:#102d33;color:var(--text);border:1px solid #2b5964;border-radius:4px;padding:5px"></div><button id="coordSend" style="width:100%">Enviar pedido</button><div class="hint" style="margin-top:6px">No multiplayer real, o pedido será entregue ao outro jogador e só uma resposta dele criará o acordo.</div></div>`;
+    p.innerHTML=h;
+    p.querySelectorAll('[data-req-accept]').forEach(b=>b.onclick=()=>{Coord.accept(+b.dataset.reqAccept);log('Pedido aceito. Combine a operação comercial antes de iniciar a logística.');coordPanel();});
+    p.querySelectorAll('[data-req-reject]').forEach(b=>b.onclick=()=>{Coord.reject(+b.dataset.reqReject);log('Pedido recusado.');coordPanel();});
+    const send=$('coordSend'); if(send) send.onclick=()=>{const to=+$('coordTo').value, type=$('coordType').value, qty=+$('coordQty').value, note=$('coordNote').value.trim(); Coord.openRequest(0,to,type,qty,note); log(`Pedido enviado para ${World.fac[to].short}.`); coordPanel();};
+  }
+  function panel(){ if(tab==='terr') terrPanel(); else if(tab==='logi') logiPanel(); else if(tab==='coord') coordPanel(); else facPanel(); }
 
+  const side=$('side'), sideToggle=$('sideToggle');
+  function setSide(open){ side.classList.toggle('collapsed',!open); if(sideToggle){sideToggle.textContent=open?'❯':'❮';sideToggle.title=open?'Fechar painel lateral':'Abrir painel lateral';sideToggle.setAttribute('aria-label',sideToggle.title);} }
+  if(sideToggle) sideToggle.onclick=()=>setSide(side.classList.contains('collapsed'));
   document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
-    tab=b.dataset.tab; document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b)); panel();
+    tab=b.dataset.tab; document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b)); setSide(true); panel();
   });
   document.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{
     World.speed=+b.dataset.sp; document.querySelectorAll('[data-sp]').forEach(x=>x.classList.toggle('on',x===b));
   });
-  addEventListener('keydown',e=>{ if(e.code==='Space'){e.preventDefault();
+  addEventListener('keydown',e=>{ if(e.key.toLowerCase()==='i' && !['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)){ setSide(side.classList.contains('collapsed')); return; } if(e.code==='Space'){e.preventDefault();
     document.querySelector(World.speed===0?'[data-sp="1"]':'[data-sp="0"]').click();}});
   addEventListener('resize',()=>{Render.fit();Render.draw();});
 
@@ -1751,7 +1819,7 @@ const Game=(()=>{
       while(acc>=st&&g++<400){ step(st); acc-=st; }
     }
     Render.draw();
-    ui+=raw; if(ui>0.28){ ui=0; UI.hud(); UI.panel(); }
+    ui+=raw; if(ui>0.8){ ui=0; UI.hud(); if(!document.getElementById('side')?.classList.contains('collapsed')) UI.panel(); }
     requestAnimationFrame(frame);
   }
   function start(){
